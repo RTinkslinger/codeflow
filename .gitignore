@@ -1,0 +1,27 @@
+# Node
+node_modules/
+.npm/
+.pnpm-store/
+
+# Build artifacts (committed at release via scripts/build-plugin.ts)
+# Note: node_modules IS committed in the release branch per UPP pattern.
+# Override this on release branch specifically.
+dist/
+*.tsbuildinfo
+
+# codeflow runtime
+.codeflow/
+~/.codeflow/
+
+# IDE / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# Test
+coverage/
+.nyc_output/

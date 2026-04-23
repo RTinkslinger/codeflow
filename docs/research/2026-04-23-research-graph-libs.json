@@ -1,0 +1,1495 @@
+{
+  "run_id": "trun_4e978fe567d34864bbe1fab1e13e2921",
+  "interaction_id": "trun_4e978fe567d34864bbe1fab1e13e2921",
+  "result_url": "https://platform.parallel.ai/play/deep-research/trun_4e978fe567d34864bbe1fab1e13e2921",
+  "status": "completed",
+  "output": {
+    "basis": [
+      {
+        "field": "live_reload_preview_architecture",
+        "reasoning": "The fine-grained field describes a live-reload browser preview architecture with a decoupled data flow: file watching triggers re-analysis, results are serialized to a versioned JSON IR, a web worker performs layout (elkjs), and rendering happens in the browser (Mermaid/D2). Excerpts that discuss a JSON graph format and ELK-based layout directly support this pipeline: the ELK library is designed to compute layout positions and can be used in a worker to augment graph data with coordinates and bend points, while the ELK JSON graph format defines the fundamental nodes/edges/labels structure that would be serialized and consumed by the client. The idea of a stable, typed graph representation in JSON that preserves IDs and multi-edges matches the description of a versioned IR/snapshot that travels from the backend to the browser. The graphology-related excerpts establish the existence of a robust, multi-purpose graph object with support for directed/undirected graphs, and a standard library of graph algorithms, which aligns with the in-memory graph model used before serialization. Additional excerpts describe general graph libraries and their type support, which is relevant for TypeScript typing of node/edge attributes and deciding whether to use the library\u2019s own types or wrap them. References to the JSON Graph Format and ELK layout API are especially central to the live-reload pipeline, while notes about rendering with Mermaid/D2 provide context on the final rendering step. These excerpts collectively support the described workflow of file watching \u2192 in-memory graph \u2192 versioned JSON IR \u2192 browser WebSocket/SSE delivery \u2192 Web Worker layout \u2192 layout-augmented JSON \u2192 renderer (Mermaid/D2).",
+        "citations": [
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          },
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne",
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW",
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E"
+            ],
+            "title": "elkjs - npm"
+          },
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. "
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://mermaid.ai/open-source/config/usage.html",
+            "excerpts": [
+              "iny Mermaid \u200b. We offer a smaller version of Mermaid that's approximately half the size of the full library. This tiny version doesn't support Mindmap"
+            ],
+            "title": "Usage | Mermaid"
+          },
+          {
+            "url": "https://github.com/terrastruct/d2",
+            "excerpts": [
+              "D2 is designed to be extensible and composable. The plugin system allows you to change out layout engines and customize the rendering pipeline."
+            ],
+            "title": "terrastruct/d2: D2 is a modern diagram scripting language ..."
+          },
+          {
+            "url": "https://jsongraphformat.info/",
+            "excerpts": [
+              "JSON Graph Format Specification Website"
+            ],
+            "title": "JSON Graph Format Specification Website"
+          },
+          {
+            "url": "https://www.npmjs.com/package/ngraph.graph",
+            "excerpts": [
+              "What to use as nodes and edges ? The most common and convenient choices are numbers and strings. You can associate arbitrary data with node"
+            ],
+            "title": "ngraph.graph"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "elkjs_role_and_integration",
+        "reasoning": "The most relevant information directly confirms the asserted role of elkjs as a layout-focused engine that does not itself model or render graphs, but computes positions and bend points on an ELK-JSON graph and returns an augmented structure with layout data. The cited content describes the core API around a dedicated ELK class with an asynchronous layout(graph, options) method, which aligns with the field value\u2019s notion of a TypeScript-friendly API centered on a single class and an async layout operation. It also explicitly states that layout computation runs in a Web Worker to avoid blocking the main UI thread and mentions a bundled browser-friendly version, which corroborates the live-reload/browser preview integration pattern mentioned in the field value. The ELK JSON graph format description confirms the exact input/output schema elkjs expects, including the requirement that elements have IDs and the presence of nodes, edges, ports, labels, and edge sections, which supports the field\u2019s details about the schema and serialization mapping. The mention that elkjs is not a diagramming framework but focuses on layout reinforces the distinction between layout-only purpose and a broader graph-model or rendering library, which is central to the field value. Collectively, these excerpts directly substantiate elkjs\u2019s role, API surface, worker-based execution model, input/output formats, and architectural integration pattern. ",
+        "citations": [
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW",
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne",
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E"
+            ],
+            "title": "elkjs - npm"
+          },
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "serialization_and_ir_strategy_comparison",
+        "reasoning": "The most directly relevant claim is that Graphology provides lossless JSON round-tripping via toJSON/fromJSON and preserves multi-edge identifiers and version information, which supports the idea of a robust serialization strategy and hints at using a stable IR wrapper rather than the library\u2019s native types. This aligns with the guidance recommending a thin, stable wrapper schema to decouple the plugin from future library changes while still leveraging the library\u2019s reliable serialization behavior. The ELK-related excerpt informs that ELK defines its own JSON schema as the IR, suggesting that when using layout-focused tools, adopting a stable, external representation is valuable. The excerpt about ngraph.graph notes that there is no built-in serialization API, but a custom implementation can achieve lossless JSON representation by iterating over nodes and links; this reinforces the general principle of wrapping or externalizing serialization/IR to ensure future-proofing, even when the library itself lacks a native serializer. The general recommendation across libraries\u2014that a stable, versioned IR schema is safer for plugin longevity\u2014provides a cohesive conclusion that complements the specific Graphology scenario. The quote about Cytoscape.js indicating a robust export/import path (cy.json) supports the idea that a clear JSON schema can serve as the IR, but for a data core, wrapping is advisable to avoid coupling UI-specific data. The additional note that graph libraries can vary in how they expose their internal models reinforces the need to treat IR as a separate concern from the library\u2019s native types. Collectively, these excerpts support the central field value by illustrating concrete serialization capabilities and strategic guidance for an external IR, with Graphology as a strong example and ELK/ngraph as contrasting approaches.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ"
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          },
+          {
+            "url": "https://www.npmjs.com/package/ngraph.graph",
+            "excerpts": [
+              "What to use as nodes and edges ? The most common and convenient choices are numbers and strings. You can associate arbitrary data with node"
+            ],
+            "title": "ngraph.graph"
+          }
+        ],
+        "confidence": "medium"
+      },
+      {
+        "field": "recommended_library",
+        "reasoning": "The strongest justification comes from statements that Graphology is a robust and multipurpose Graph object for JavaScript and TypeScript, which directly supports the idea of Graphology as a solid foundation for a TypeScript-based plugin with typed node/edge attributes. Additional supporting details describe Graphology as capable of representing directed, undirected, or mixed graphs, with options for self-loops and parallel edges, which aligns with the need for multi-edge support and flexible graph modeling. The presence of a comprehensive standard library of graph theory algorithms and utilities further reinforces Graphology\u2019s suitability for a plugin that requires topological sorts, SCCs, shortest paths, and clustering, as well as layouts and metrics within a cohesive ecosystem. Type declaration exports and TS compatibility are noted, which is important for a strongly-typed IR and integrations, suggesting that its typings can be used directly or wrapped, aiding in maintaining type safety across languages. Some excerpts discuss the existence of a GitHub repository and community around Graphology, which supports maintenance velocity and production readiness via an active ecosystem. Together, these points directly support Graphology as the recommended library and provide concrete aspects (typing, multi-edge support, algorithm library, and ecosystem) that are relevant to the research question. Peripheral excerpts that describe layout or ELK-focused tools are less directly supportive of Graphology as the recommended core library but provide useful contrasting context for 2024-2026 activity and rising alternatives.\n",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "If your version of npm is a bit old, you may need to install `graphology-types` yourself if the peer dependency resolution is not made for you already:\n```\nnpm install graphology-type"
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip"
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/graphology",
+            "excerpts": [
+              "graphology is a specification for a robust & multipurpose JavaScript Graph object and aiming at supporting various kinds of graphs under a same unified "
+            ],
+            "title": "graphology"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "executive_summary",
+        "reasoning": "The executive_summary asserts that Graphology is a robust and multipurpose Graph object for JavaScript and TypeScript, with first-class TypeScript support, multi-directed graph handling, and a comprehensive ecosystem of plugins for algorithms and layouts. Excerpts that directly state Graphology\u2019s broad applicability and TypeScript compatibility support this. Specifically, the claim that Graphology is a robust and multipurpose Graph object for JavaScript and TypeScript is echoed by a citation describing Graphology as a robust & multipurpose Graph object for JavaScript and TypeScript. The note that a Graphology graph can be directed, undirected, or mixed, and can support self-loops or parallel edges reinforces the multi-edge and graph-form capabilities highlighted in the executive_summary. Additional excerpts describe the inclusion of a comprehensive standard library with graph theory algorithms and utilities (including layouts and traversals), which aligns with the claimed rich algorithm ecosystem. Information about type declarations being installed alongside peer dependencies reinforces the TypeScript ergonomics claim. Mentions of a robust ecosystem with plugins for layouts, algorithms, and metrics further corroborate the ecosystem strength. The npm-focused excerpt emphasizes practical deployment aspects and confirms ongoing maintenance and usage in the ecosystem. Together, these excerpts coherently support the executive_summary\u2019s evaluation of Graphology as the preferred core for a TypeScript graph facility with strong typing, multi-edge support, serialization potential, and rich algorithmic tooling. Excerpts discussing installation details of graphology-types and general typings reinforce the TS ergonomics claim, while the ecosystem and layout/algorithm references reinforce the broader toolchain suitability. The other libraries (ngraph, Cytoscape.js, etc.) are mentioned as comparisons in the executive_summary but do not directly support Graphology\u2019s core strengths, thus are less relevant to the specific Graphology-focused assessment. Overall, the evidence paints a coherent picture favoring Graphology for the described plugin goals, with strong alignment across core features, typing, and ecosystem tooling.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "If your version of npm is a bit old, you may need to install `graphology-types` yourself if the peer dependency resolution is not made for you already:\n```\nnpm install graphology-type"
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. "
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/graphology",
+            "excerpts": [
+              "graphology is a specification for a robust & multipurpose JavaScript Graph object and aiming at supporting various kinds of graphs under a same unified "
+            ],
+            "title": "graphology"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "recommendation_rationale",
+        "reasoning": "The recommended Graphology claim is grounded in multiple aspects shown across the excerpts. A key point is that graphology provides a robust and multipurpose Graph object for JavaScript and TypeScript, which directly supports strong TypeScript ergonomics and a unified API suitable for typed graphs. The library\u2019s ability to model directed, undirected, or mixed graphs and to support parallel edges (MultiDirectedGraph) aligns with the requirement for native multi-edge support between the same pair of nodes. The high-fidelity serialization capability, via built-in toJSON and fromJSON, underpins reliable JSON round-tripping necessary for the plugin\u2019s live-reload preview and cross-language data exchange. The modular ecosystem, including graphology-utils and graphology-operators, supplies essential algorithms such as topological sort, SCCs, and shortest paths without pulling in an unnecessary UI layer, which is preferred over heavier stacks. TypeScript typings are provided alongside the library to enable strong typing for node and edge attributes, supporting the argument that the library offers excellent TypeScript ergonomics. The project\u2019s maturity and active maintenance velocity, evidenced by GitHub activity and adoption as the backend for a well-known visualization library (sigma.js), bolster confidence in production readiness. Collectively, these points substantiate Graphology as the best-fit option for a TS-based code-dependency-graph plugin requiring typed attributes, multi-edge support, reliable serialization, algorithm coverage, and proven production use. The cited excerpts corroborate each of these facets: the robust/multipurpose nature of the Graph object; directed/mixed graphs and parallel edges; TypeScript typings; a comprehensive standard library of graph algorithms; and documented maturity/maintenance with real-world usage.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "other_libraries_analysis",
+        "reasoning": "The most directly relevant parts confirm core claims in the fine-grained field value. The statement that Graphology offers excellent TypeScript support out of the box, with built-in declarations and a generic-friendly API for node/edge attribute types, is supported by a description emphasizing Graphology as a robust Graph object for JavaScript and TypeScript, with TypeScript declarations and generic interfaces for attributes. The claim about first-class multi-edge support via a MultiDirectedGraph and the ability to differentiate parallel edges with a key aligns with excerpts describing directed/undirected/mixed graphs and support for parallel edges through a key on addEdge. The assertion that Graphology includes a comprehensive standard library of algorithms and utilities, including traversals, topological sort, SCCs, and shortest paths, is backed by references to a standard library full of graph theory algorithms and common utilities, as well as explicit mentions of algorithms for dependency analysis. The note about serialization fidelity (toJSON/fromJSON) and lossless round-tripping of graph structure, including preservation of typed attributes and parallel-edge keys, is supported by descriptions of robust serialization capabilities and the preservation of edge keys/attributes in the serialized format, along with migration-supporting version information. The bundle-size detail is corroborated by a quantitative claim that the core package is a few megabytes, with tree-shaking ability to reduce final bundle size, and that the core footprint can be under a small footprint when minimized, which is consistent with the provided note about module size and modularity. The general statements about Graphology being an excellent fit for a non-UI data-model core, its strong TypeScript support, and its balance between minimalism and feature richness are grounded in multiple excerpts describing Graphology as a robust, multi-purpose Graph object with comprehensive capabilities and a favorable trade-off compared to ultra-minimal libraries and UI-focused alternatives.\n",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. "
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/graphology",
+            "excerpts": [
+              "graphology is a specification for a robust & multipurpose JavaScript Graph object and aiming at supporting various kinds of graphs under a same unified "
+            ],
+            "title": "graphology"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "decision_matrix_summary",
+        "reasoning": "The analysis emphasizes strong TypeScript ergonomics and native multi-edge support as key strengths for Graphology. Excerpts describe graphology as a robust, multipurpose Graph object for JavaScript and TypeScript, with the ability to be directed, undirected, mixed, and to support parallel edges, alongside built-in type declarations and an extensive standard library of graph algorithms and utilities. This directly supports claims in the matrix that Graphology offers excellent native generics, native multi-edge support, and a comprehensive algorithm ecosystem. Additional excerpts note the graphology ecosystem includes layouts, traversals, and a modular approach to algorithms, reinforcing the matrix\u2019s assessment of algorithm coverage and tooling. The presence of TypeScript typings and the suggestion to install graphology-types further substantiates the TS ergonomics and type-safety claims. References to the library\u2019s broad ecosystem and ongoing maintenance (e.g., multiple releases, active maintenance) align with the matrix\u2019s Maintenance (2024-2026) rating. To contrast with other libraries, the excerpts about ngraph.graph establish a different approach to typings and serialization challenges, signaling why Graphology might rate higher on serialization fidelity and TS integration in the matrix. Excerpts about ELK (elkjs) clarify that its focus is on layout computation rather than being a graph-model library, supporting the matrix\u2019s placement of Cytoscape.js and other UI-oriented tools as less suitable for a non-UI core data model. Notes about generics in TypeScript (Generics documentation) corroborate the importance of generic type parameters when modeling node/edge attributes, aligning with the matrix\u2019s emphasis on TypeScript generics. Overall, the strongest, most direct evidence supports the matrix\u2019s positive assessment of Graphology\u2019s typing, multi-edge support, and broad algorithmic ecosystem, while other excerpts provide context about alternative libraries and general graph-format/typing considerations.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. "
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+            "excerpts": [
+              "Generic Classes. A generic class has a similar shape to a generic interface. Generic classes have a generic type parameter list in angle brackets ( <> ) "
+            ],
+            "title": "Documentation - Generics"
+          },
+          {
+            "url": "https://www.npmjs.com/package/graphology",
+            "excerpts": [
+              "graphology is a specification for a robust & multipurpose JavaScript Graph object and aiming at supporting various kinds of graphs under a same unified "
+            ],
+            "title": "graphology"
+          },
+          {
+            "url": "https://www.npmjs.com/package/ngraph.graph",
+            "excerpts": [
+              "What to use as nodes and edges ? The most common and convenient choices are numbers and strings. You can associate arbitrary data with node"
+            ],
+            "title": "ngraph.graph"
+          }
+        ],
+        "confidence": "medium"
+      },
+      {
+        "field": "rising_alternatives_2024_2026",
+        "reasoning": "The central claim is that as of 2026 there are no strong rising TypeScript-native graph libraries that exceed the maturity and production readiness of established options like Graphology or ngraph. Excerpts describing Graphology as a robust and multipurpose Graph object for JavaScript and TypeScript establish its core maturity and versatility. Additional excerpts note that Graphology provides a comprehensive standard library of graph theory algorithms and utilities, reinforcing its capability to cover serialization, topology, traversal, and other graph operations within a single ecosystem. Other excerpts confirm the presence of TypeScript declarations and the need for aligned typings, which supports a robust TypeScript integration story and helps the library serve as a stable IR for typed graphs. A separate excerpt highlights that Graphology graphs can be directed, undirected, or mixed, and can support self-loops or parallel edges, which demonstrates feature breadth relevant for multi-edge and complex dependency graphs. The statement about TypeScript generics and generic usage in TS generics literature supports the idea that mature TS typing practices are well-supported in the ecosystem. Additionally, simple references to Graphology\u2019s GitHub presence reiterate its maturity and community adoption. The inclusion of ngraph.graph as another mature option with node/edge data attachments shows that more traditional, production-ready graph libraries exist outside Graphology, supporting the overall conclusion that no rising challenger has eclipsed these established choices within the stated period. Taken together, these excerpts consistently support the field value: the landscape as of 2024\u20132026 shows no clear, high-signal rising library that exceeds the maturity and wide adoption of Graphology or ngraph for the described plugin use case. The supporting details emphasize robust TS typings, broad graph-structure support (directed/undirected/mixed, multi-edges), and a strong algorithmic/tooling ecosystem, all of which underline the maturity claim.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "If your version of npm is a bit old, you may need to install `graphology-types` yourself if the peer dependency resolution is not made for you already:\n```\nnpm install graphology-type"
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip"
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/ngraph.graph",
+            "excerpts": [
+              "What to use as nodes and edges ? The most common and convenient choices are numbers and strings. You can associate arbitrary data with node"
+            ],
+            "title": "ngraph.graph"
+          },
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E",
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne",
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW"
+            ],
+            "title": "elkjs - npm"
+          },
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          },
+          {
+            "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+            "excerpts": [
+              "Generic Classes. A generic class has a similar shape to a generic interface. Generic classes have a generic type parameter list in angle brackets ( <> ) "
+            ],
+            "title": "Documentation - Generics"
+          },
+          {
+            "url": "https://mermaid.ai/open-source/config/usage.html",
+            "excerpts": [
+              "iny Mermaid \u200b. We offer a smaller version of Mermaid that's approximately half the size of the full library. This tiny version doesn't support Mindmap"
+            ],
+            "title": "Usage | Mermaid"
+          },
+          {
+            "url": "https://github.com/terrastruct/d2",
+            "excerpts": [
+              "terrastruct/d2: D2 is a modern diagram scripting language ...",
+              "D2 is designed to be extensible and composable. The plugin system allows you to change out layout engines and customize the rendering pipeline."
+            ],
+            "title": "terrastruct/d2: D2 is a modern diagram scripting language ..."
+          },
+          {
+            "url": "https://github.com/mermaid-js/mermaid/releases",
+            "excerpts": [
+              "Releases \u00b7 mermaid-js/mermaid\nGeneration of diagrams like flowcharts or sequence diagrams from text in a similar manner as markdown - Releases \u00b7 mermaid-js/mermaid ."
+            ],
+            "title": "Releases \u00b7 mermaid-js/mermaid"
+          },
+          {
+            "url": "https://jsongraphformat.info/",
+            "excerpts": [
+              "JSON Graph Format Specification Website"
+            ],
+            "title": "JSON Graph Format Specification Website"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "maintenance_and_adoption_comparison",
+        "reasoning": "The strongest signals for maintenance velocity come from excerpts that describe how the library is updated and maintained over time. Excerpts discussing elkjs highlight that the JavaScript wrapper is actively maintained with regular releases and that the project tracks the underlying core Eclipse ELK project, which is a concrete indicator of ongoing maintenance activity and alignment with upstream work. The explicit notes about an active maintenance cycle, including API-focused files and the wrapper\u2019s relationship to the core project, support the notion that elkjs has a healthy maintenance cadence. Additional excerpts that describe graphology as a robust, multipurpose Graph object and mention its broad ecosystem reinforce the perception of production readiness and long-term viability, even if they do not provide explicit release cadence. They establish that graphology is a mature project with an established role in real-world tooling, which is a hallmark of adoption. Broader ecosystem maturity signals, such as the presence of a comprehensive standard library with algorithms and utilities, further contextualize the ecosystem around these libraries, suggesting longer-term viability and potential for production use, even if they do not quantify maintenance velocity directly. The combined evidence from these excerpts supports a conclusion that elkjs shows clear maintenance activity and that graphology and its ecosystem have credible production adoption signals through their established presence and feature breadth. However, while some excerpts provide explicit maintenance cues for elkjs, others offer indirect indicators for the broader libraries, leading to a moderate overall confidence that is stronger for elkjs maintenance and production use, and more inferential for the other libraries. The rationale above directly ties the cited phrases to the field value expectations: explicit maintenance activity and regular releases for elkjs; production adoption cues for graphology via ecosystem maturity and real-world usage mentions; and contextual maintenance/evolution signals from general library descriptions.\n",
+        "citations": [
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E",
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW",
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne"
+            ],
+            "title": "elkjs - npm"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          },
+          {
+            "url": "https://www.npmjs.com/package/ngraph.graph",
+            "excerpts": [
+              "What to use as nodes and edges ? The most common and convenient choices are numbers and strings. You can associate arbitrary data with node"
+            ],
+            "title": "ngraph.graph"
+          }
+        ],
+        "confidence": "medium"
+      },
+      {
+        "field": "library_profiles",
+        "reasoning": "The field value emphasizes that Graphology offers a first-class TypeScript experience with built-in declaration files and a generic-friendly API, enabling strong typing for node and edge attributes. The excerpts describing Graphology as a robust, multipurpose Graph object for JavaScript & TypeScript, its support for directed/undirected/mixed graphs, and its native multi-edge modeling directly support those claims about API ergonomics and typing. Furthermore, Graphology\u2019s serialization capabilities are highlighted through mentions of graph.toJSON or graph.fromJSON with lossless round-trips and versioned schema information; this aligns with the field value\u2019s emphasis on fidelity in serialization. The presence of a comprehensive standard library of graph algorithms (topological sort, SCC, shortest path, clustering) is supported by excerpts describing the ecosystem of algorithms and utilities that accompany the core Graphology package. The excerpts also discuss performance considerations, noting linear-time characteristics for core operations and real-world suitability for large-scale, real-time applications, which corroborates the field value\u2019s performance claim and its moderate bundle size relative to a full UI stack. Maintenance velocity and community activity are evidenced by commit/release counts and a production user (sigma.js), supporting the field value\u2019s maintenance and adoption assessment. Finally, the IR strategy guidance excerpt explicitly discusses whether to use native TypeScript types as the IR or to wrap them in a stable, versioned schema, which maps directly to the field value\u2019s guidance on schema evolution and IR strategy. In sum, these excerpts collectively validate Graphology\u2019s position on typing ergonomics, multi-edge support, JSON fidelity, algorithm coverage, performance, bundle size, maintenance, and strategic guidance for integration, which is the core of the field value. The comparison against other libraries (ngraph, Cytoscape.js, elkjs) is reflected in excerpts that describe each library\u2019s strengths and trade-offs, providing the necessary context to evaluate the recommendation in the final field value.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "If your version of npm is a bit old, you may need to install `graphology-types` yourself if the peer dependency resolution is not made for you already:\n```\nnpm install graphology-type",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. "
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/graphology",
+            "excerpts": [
+              "graphology is a specification for a robust & multipurpose JavaScript Graph object and aiming at supporting various kinds of graphs under a same unified "
+            ],
+            "title": "graphology"
+          },
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E",
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne",
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW"
+            ],
+            "title": "elkjs - npm"
+          },
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "typescript_ergonomics_comparison",
+        "reasoning": "To support the fine-grained field value, I identify excerpts that directly address TypeScript ergonomics and generic attribute typing across the libraries in question. Excerpt describing that graphology ships with built-in TypeScript declarations and its API is generic-friendly, enabling Graph<NodeAttributes, EdgeAttributes> and compile-time safety, aligns with the claim that Graphology offers excellent ergonomics and strong type support. Excerpt noting that graphology also exports type declarations as a separate package reinforces the idea of solid TS integration. Excerpt highlighting that @ant-design/x6 is a TypeScript-first library with strong typing guarantees and first-class support for generics corroborates the assertion about ergonomic, typed graph models in that library. Excerpt describing ngraph.graph as JavaScript-based with community typings that expose generic signatures for node/edge data demonstrates a solid but less integrated TS experience compared to TS-native libraries. Excerpt stating Cytoscape.js uses a core data model based on plain JSON objects that can be strongly typed via standard TS interfaces supports the notion of good ergonomic typing in a widely used graph visualization context. Excerpt addressing @dagrejs/graphlib having moderate TS support and limited generics reinforces the nuanced view of ergonomics across graph libraries. Excerpt on generics in TypeScript documentation provides foundational support for understanding generic graph models. Excerpt specifically comparing ngraph.graph\u2019s TS ergonomics and the broader ecosystem (JS/TS typing) further substantiates the nuanced landscape. Excerpts mentioning graphology-types installation and Graph.png-style typing details reinforce practical ergonomics considerations (typing packages and developer experience). Excerpt about the JSON graph format and tooling (e.g., Mermaid/D2) adds context for serialization and downstream rendering compatibility, which is relevant to API ergonomics when wrapping extractor output. Collectively, these excerpts map to the field value\u2019s evaluation of DX and API ergonomics across multiple libraries, with Graphology and @ant-design/x6 exemplifying strong TS ergonomics, while others vary in typing depth and integration. The most directly supportive pieces are those describing explicit TS typings, generic-friendly APIs, and the presence or absence of native TS support across the libraries in question. The remaining excerpts provide contextual support about library capabilities and ecosystem considerations that influence ergonomic assessment but do not directly claim strong TS typings themselves.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "If your version of npm is a bit old, you may need to install `graphology-types` yourself if the peer dependency resolution is not made for you already:\n```\nnpm install graphology-type",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+            "excerpts": [
+              "Generic Classes. A generic class has a similar shape to a generic interface. Generic classes have a generic type parameter list in angle brackets ( <> ) "
+            ],
+            "title": "Documentation - Generics"
+          },
+          {
+            "url": "https://www.npmjs.com/package/ngraph.graph",
+            "excerpts": [
+              "What to use as nodes and edges ? The most common and convenient choices are numbers and strings. You can associate arbitrary data with node"
+            ],
+            "title": "ngraph.graph"
+          },
+          {
+            "url": "https://www.npmjs.com/package/graphology",
+            "excerpts": [
+              "graphology is a specification for a robust & multipurpose JavaScript Graph object and aiming at supporting various kinds of graphs under a same unified "
+            ],
+            "title": "graphology"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "multi_edge_support_comparison",
+        "reasoning": "The most directly relevant evidence comes from excerpts that explicitly describe multi-edge support or parallel edges. The claim that a library can have multiple edges between the same source and target is clearly supported by the statement that the graphology API can be used with a MultiDirectedGraph class dedicated to this purpose, or by passing a unique edge key to addEdge so that multiple edges between the same nodes each carry its own attribute object. This directly substantiates dedicated multi-edge capability and a mechanism to distinguish edges. Similarly, the other Graphology-related excerpt notes that the library provides a comprehensive standard library of graph theory algorithms and utilities, reinforcing that multi-edge scenarios are within its design scope. Expanding to neighboring entries, the mention that an ecosystem like ngraph.graph supports multi-edges with an addLink function that accepts a unique identifier for each edge confirms parallel-edge capability in a core library. The entry describing @ant-design/x6 as having explicit support for multi-edge objects with unique IDs further substantiates parallel-edge support in that toolkit. The assertion that Cytoscape.js supports multi-edges by convention (multiple edge objects with the same source/target but unique IDs) further corroborates parallel-edge capability across a UI-oriented graph library. ELK-related entries acknowledge multi-edge support in the layout pipeline: ELK\u2019s JSON input schema supports multi-edges through its extended edge format with sources[] and targets[] arrays, allowing proper processing of parallel edges by the layout engine, while elkjs provides the API and worker split to perform such layouts. The ELK Graph Format documentation reinforces this with explicit structure for edges, which is relevant for preserving parallel-edge information when serializing/deserializing., and the ELK JSON graph format description explains how edges are represented to handle multiple connections. Finally, the ngraph.graph entry reiterates the standard practice of choosing nodes and edges, and its description of edge handling complements the multi-edge discussion from the other sources, though it is slightly less explicit about parallel edges in this single line. Together, these excerpts cover explicit multi-edge constructs (MultiDirectedGraph, unique edge IDs), support in multiple libraries (graphology, ngraph.graph, @ant-design/x6, cytoscape.js), and the corresponding layout/serialization implications via ELK formats and JSON graph representations, all of which map directly to the requested analysis of multi-edge fidelity and integration in a TypeScript-centric plugin setting.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. "
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E",
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne",
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW"
+            ],
+            "title": "elkjs - npm"
+          },
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          },
+          {
+            "url": "https://www.npmjs.com/package/ngraph.graph",
+            "excerpts": [
+              "What to use as nodes and edges ? The most common and convenient choices are numbers and strings. You can associate arbitrary data with node"
+            ],
+            "title": "ngraph.graph"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "elkjs_role_and_integration.integration_patterns",
+        "reasoning": "The information indicates that elkjs serves as a dedicated layout engine used in conjunction with renderers, rather than as a full diagramming framework. The notion that elkjs separates API concerns from layout computation, and that it connects editors or viewers to automatic layout algorithms, directly supports its role in providing advanced layout features beyond basic render capabilities. The existence of a defined ELK JSON graph format underscores how the IR is structured and serialized, aligning with the described live-reload workflow that generates a stable intermediate representation from source graphs. The documentation stating elkjs is not a diagramming framework but computes positions reinforces its specialized role in layout, which is central to the integration pattern where layout results are augmented into the graph data and consumed by renderers like Mermaid or D2. Collectively, these excerpts corroborate the described live-reload pattern: running elkjs in a Web Worker, producing an ELK-specified JSON IR, communicating via postMessage, receiving augmented coordinates, and applying them to the renderer, with a strategy to cache positions to minimize flicker.",
+        "citations": [
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW",
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E",
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne"
+            ],
+            "title": "elkjs - npm"
+          },
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "algorithm_coverage_comparison",
+        "reasoning": "The most relevant passages directly describe the existence and breadth of algorithm-focused features in Graphology and contrast it with other libraries. The claim that Graphology offers a comprehensive standard library with graph theory algorithms is supported by a statement describing an extensive ecosystem of algorithms, traversals, topological sort, SCCs, various shortest path algorithms (e.g., Dijkstra, A*), and clustering utilities. This directly substantiates the field value\u2019s emphasis on available graph algorithms and their importance for analytical tasks beyond mere data storage. Additional passages emphasize Graphology\u2019s core being lean but the ecosystem (graphology-utils, graphology-operators) provides rich algorithmic capabilities, reinforcing the point about feature depth suitable for plugins needing deep analysis. Further support comes from explicit notes that the Graph object can be directed, undirected, or mixed, and can support self-loops or parallel edges, which underpins multi-edge scenarios and flexible graph modeling\u2014an important part of API ergonomics and real-world usage for complex dependency graphs. The assertion that the library totality uses a unified interface across various graph kinds adds to the case for ergonomic TS usage and integration in a TypeScript plugin environment. A contrasting view is provided by excerpts describing elkjs as a layout engine rather than a graph-model library, highlighting that it computes positions but does not provide broad graph-theory algorithms; this contrast strengthens the relevance of knowing which libraries include analytical algorithms. Additional passages note that there are type declarations and the need to ensure TypeScript compatibility, which is relevant to whether library types should serve as the internal representation or be wrapped by the plugin, fitting the requested TS ergonomics consideration. There is also an excerpt indicating the ngraph ecosystem offers modular, focused algorithm packages (e.g., for shortest paths, SCC, topological sort) while the core is minimal, which is highly relevant for evaluating trade-offs between a minimal core plus optional algorithms versus a full feature set. A mention of the ngraph graph data model prompts attention to node/edge data augmentation, which aligns with the need to associate attributes and potentially serialize/deserialize in JSON. Finally, references to TypeScript generics documentation and the general generics approach support the schema-evolution and typed attribute concerns inherent in the field value request. Taken together, these excerpts collectively support the main claim about varying algorithm coverage across libraries and how that affects suitability for analytic plugins, while also addressing typing, multi-edge capability, and serialization concerns.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ"
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E",
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW"
+            ],
+            "title": "elkjs - npm"
+          },
+          {
+            "url": "https://www.npmjs.com/package/ngraph.graph",
+            "excerpts": [
+              "What to use as nodes and edges ? The most common and convenient choices are numbers and strings. You can associate arbitrary data with node"
+            ],
+            "title": "ngraph.graph"
+          },
+          {
+            "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+            "excerpts": [
+              "Generic Classes. A generic class has a similar shape to a generic interface. Generic classes have a generic type parameter list in angle brackets ( <> ) "
+            ],
+            "title": "Documentation - Generics"
+          }
+        ],
+        "confidence": "medium"
+      },
+      {
+        "field": "elkjs_role_and_integration.input_output_schema",
+        "reasoning": "The finegrained field describes the ELK JSON format as used by elkjs, including its core elements (nodes, ports, labels, edges, edge sections), the requirement that elements (except labels) have unique ids, and that nodes carry width/height and may have layoutOptions. It also notes that adapting to a different graph model (e.g., Graphology or ngraph) requires a mapping function to convert source entities to ELK JSON nodes and dependencies to edges, with typed attributes serialized into a metadata or layoutOptions field to preserve them through layout. The cited excerpts collectively support these core points: one excerpt explicitly states that the ELK JSON Graph Format consists of five basic elements: nodes, ports, labels, edges, and edge sections; another excerpt confirms that ELK\u2019s role is to compute layout positions (i.e., it is a layout engine) and that elkjs connects editors/viewers to layout algorithms, which aligns with the idea of consuming or generating an ELK-compliant JSON graph for downstream rendering or further processing; a third excerpt notes that elkjs exposes an API and includes a worker component, which is relevant to how ELK JSON data would be ingested and processed in a TypeScript plugin ecosystem; a fourth excerpt clarifies that elkjs is not a full diagramming framework but focuses on computing positions, implying that it serves as a backend layout provider rather than a UI graph model itself. Together, these excerpts substantiate the described ELK JSON schema usage, the mapping pathway from other graph models (e.g., Graphology) to ELK JSON, and the handling of multi-entity graphs via unique IDs and layout-related fields. The most direct support comes from the explicit enumeration of ELK JSON graph elements, followed by the contextual notes about ELK\u2019s integration and API exposure, which corroborate how the field value would be implemented in practice. ",
+        "citations": [
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          },
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW",
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E",
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne"
+            ],
+            "title": "elkjs - npm"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "elkjs_role_and_integration.performance_notes",
+        "reasoning": "The most relevant excerpt describes the elk worker component, highlighting a separation where one file exposes the API while another file handles the actual layout logic, which aligns with the non-blocking, worker-based layout behavior mentioned in the field value. This supports understanding how elkjs can perform layout in a separate execution context, potentially enabling non-blocking execution. Another excerpt clarifies that elkjs itself does not provide a full diagramming framework but computes layout positions, which dovetails with the performance-focused considerations because it emphasizes the layout computation role rather than UI rendering. A third excerpt points out that ELKjs provides infrastructure to connect diagram editors or viewers to automatic layout algorithms, making the layout logic accessible to JavaScript\u2014this reinforces the integration angle and the idea of remote or modular layout processing that could impact performance characteristics in real-world use. Finally, a fourth excerpt describes the ELK JSON graph format\u2019s basic elements, which is relevant for understanding how graph data is structured for layout processing, though it is less about performance specifics. Together, these excerpts collectively touch on the architecture (API vs worker), the non-diagramming nature of elkjs (layout-focused), the integration pathway (making ELK concepts accessible to JS), and the data format that underpins how layouts are computed and consumed. This combination provides partial support for the stated performance notes, especially around the role of a Web Worker-like layout process and integration aspects, but does not provide explicit performance metrics or Web Worker implementation details beyond the general structure.",
+        "citations": [
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW",
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne",
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E"
+            ],
+            "title": "elkjs - npm"
+          },
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          }
+        ],
+        "confidence": "low"
+      },
+      {
+        "field": "other_libraries_analysis.typescript_typing_quality",
+        "reasoning": "The most relevant information comes from excerpts that explicitly address TypeScript typing: one excerpt notes that Graphology provides type declarations that are installed alongside the package, enabling usage with TypeScript, which directly supports the claim about built-in TypeScript declarations. Another excerpt describes Graphology as generic-friendly and mentions overloads that let developers define strongly-typed interfaces for node and edge attributes, which directly substantiates the claim about compile-time type safety and IDE support. Supporting context from other excerpts reinforces that Graphology is a robust Graph object with a broad API surface, which aligns with expectations for good typing support in a mature library, though those statements do not directly claim typing quality themselves. Collectively, these excerpts support the notion that Graphology offers excellent TypeScript support out of the box and caters to strongly-typed usage, while painting a broader picture of its capabilities.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/graphology",
+            "excerpts": [
+              "graphology is a specification for a robust & multipurpose JavaScript Graph object and aiming at supporting various kinds of graphs under a same unified "
+            ],
+            "title": "graphology"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "other_libraries_analysis.library_name",
+        "reasoning": "The target field identifies the library name as Graphology. Excerpts provide explicit information that Graphology is a robust, multipurpose Graph object for JavaScript and TypeScript, indicating strong TS typing support and a unified interface for various graph types. Additional excerpts describe its ability to represent directed, undirected, or mixed graphs, support for self-loops and parallel edges, and available type declarations. Further excerpts mention a comprehensive standard library of graph theory algorithms and utilities, which is essential for topological sorts, SCCs, and shortest paths. The presence of a GitHub description and npm page notes reinforces Graphology\u2019s maturity and ecosystem activity, including maintenance and usage in production-like contexts. Collectively, these points directly support the fine-grained field value by confirming Graphology as a capable, TS-friendly graph library with broad algorithmic coverage and an active ecosystem relevant to the research question about TypeScript graph libraries and production readiness.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ"
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/graphology",
+            "excerpts": [
+              "graphology is a specification for a robust & multipurpose JavaScript Graph object and aiming at supporting various kinds of graphs under a same unified "
+            ],
+            "title": "graphology"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "other_libraries_analysis.multi_edge_support",
+        "reasoning": "The fine-grained field value asserts that the library provides first-class multi-graph support, specifically via a MultiDirectedGraph, and that addEdge can take a key to create multiple parallel edges between the same source and target, with each edge carrying its own attributes. The most directly relevant information comes from excerpts that explicitly discuss multi-edge support and parallel edges: one excerpt states that the graph can be directed, undirected, or mixed and can be simple or support parallel edges, which establishes the basic capability for multiple edges between the same nodes. Another excerpt mentions that the library can be instantiated as a MultiDirectedGraph and that edges can have an optional key parameter, enabling multiple distinct edges between the same pair of nodes with independent attributes. A third excerpt reinforces this by describing that the graph supports parallel edges and that an edge key allows for multiple distinct edges between the same source and target with separate attributes. Collectively, these excerpts directly substantiate the specific capability described in the field value. Supporting context comes from excerpts that frame graphology as a robust, multipurpose Graph object with broad edge/graph capabilities, and from mentions of parallel edges in related documentation, which corroborate the same feature set in a broader sense. Finally, those excerpts noting the presence of a comprehensive standard library and the overall graphology ecosystem help situate multi-edge support within the library\u2019s broader capabilities, reinforcing that such functionality is part of the mature, production-oriented feature set. In short, the strongest support comes from explicit statements about directed/mixed graphs with parallel edges and an addEdge API that can take a key to create distinct edges, while additional excerpts provide contextual validation of graphology\u2019s broad, multi-edge-capable graph model. The conclusion drawn is that multi-edge support is a core and well-supported feature, with MultiDirectedGraph and edge-key semantics being central mechanisms, aligning with the described use case of modeling complex, language-merged dependencies.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ"
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. "
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/graphology",
+            "excerpts": [
+              "graphology is a specification for a robust & multipurpose JavaScript Graph object and aiming at supporting various kinds of graphs under a same unified "
+            ],
+            "title": "graphology"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "elkjs_role_and_integration.role_clarification",
+        "reasoning": "The claim that elkjs is strictly a layout engine is directly supported by the statement that it is not a diagramming framework and that its purpose is to compute positions for the elements of a diagram. This establishes elkjs as a layout-only component that operates on an input graph to augment it with layout data such as node positions and bend points. Supporting context notes that elkjs connects diagram editors to automatic layout algorithms and makes the layout-relevant portion of ELK available in JavaScript, reinforcing its role as a layout processor rather than a graph modeler or renderer. The ELK JSON Graph Format excerpt provides a schema for the input graph (nodes, edges, labels, etc.), which is precisely the kind of data a layout engine consumes to produce coordinates, further aligning with the layout-engine interpretation. The remaining excerpt mentions the existence of ELK-related API files, which is consistent but does not add a direct claim about its role beyond architectural separation. Taken together, these excerpts coherently support the notion that elkjs focuses on layout computation and augmentation, not on graph modeling or rendering, while relying on a separate data structure format for input and output.",
+        "citations": [
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne",
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E",
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW"
+            ],
+            "title": "elkjs - npm"
+          },
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "other_libraries_analysis.overall_fit_and_summary",
+        "reasoning": "The claim that Graphology is a robust and multipurpose Graph object for JavaScript and TypeScript is directly supported by the description of Graphology as a robust and multipurpose graph library, which aligns with a non-UI data-model core requirement. The presence of a comprehensive standard library with graph theory algorithms and utilities supports the need for broad algorithm coverage (topological sorts, SCCs, shortest paths, clustering). The explicit note that a Graphology graph can be directed, undirected, or mixed, and that it supports self-loops and parallel edges directly underpins multi-edge support and flexible modeling in a TypeScript plugin. Type declarations and TS compatibility reinforce the TS generics and IR wrapping considerations, suggesting that integration with TypeScript types is straightforward and that there are options around using native types or wrappers. Additional excerpts reinforce that Graphology aims to support various kinds of graphs under a unified interface and that it provides a robust core beyond UI concerns, which supports the overall suitability for a non-UI data-model core, including lossless serialization considerations via the library\u2019s broader ecosystem. Taken together, these excerpts substantiate Graphology as an excellent fit for a TypeScript plugin that models multi-language code dependency graphs and requires stable serialization and extensive graph algorithms, while positioning it as a middle-ground between ultra-minimalist and UI-heavy solutions.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/graphology",
+            "excerpts": [
+              "graphology is a specification for a robust & multipurpose JavaScript Graph object and aiming at supporting various kinds of graphs under a same unified "
+            ],
+            "title": "graphology"
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "elkjs_role_and_integration.limitations_and_fallbacks",
+        "reasoning": "The most pertinent information defines elkjs as a layout-focused tool that exposes an API and a separate worker, rather than being a full diagramming framework. This directly informs how it would fit into a TypeScript plugin that wraps extractor outputs and relies on layout computation as a service, highlighting its role as the layout engine rather than a complete visualization stack. The description that elkjs connects diagram editors or viewers to automatic layout algorithms and makes ELK\u2019s layout-relevant parts available to JavaScript clarifies integration boundaries a plugin must respect, particularly when coordinating with other graph-model components. The JSON graph format excerpt outlines the structural elements (nodes, ports, labels, edges, edge sections) that such a plugin would need to serialize/deserialize and to feed into a layout component, which is essential for interoperability and data fidelity. Finally, the note stating that elkjs is not a diagramming framework itself, but computes positions for diagram elements, reinforces that the core strengths and responsibilities lie in layout computation rather than rendering or UI concerns, guiding where to implement wrappers and how to structure the IR versus library-provided types.",
+        "citations": [
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E",
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW",
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne"
+            ],
+            "title": "elkjs - npm"
+          },
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          }
+        ],
+        "confidence": "low"
+      },
+      {
+        "field": "elkjs_role_and_integration.api_and_configuration",
+        "reasoning": "The most directly relevant excerpt discusses the elk-js package structure, highlighting the presence of an elk-api.js entry point and an elk-worker.js file, which aligns with a TypeScript-friendly API centered around a core ELK interface and a separate worker for layout tasks. This supports the notion of a primary API surface (the ELK class) and the use of a Web Worker for non-blocking layout computation. A second excerpt reinforces that ELK provides layout-focused functionality within the JavaScript/diagram ecosystem, which is consistent with a dedicated API for computing positions rather than diagramming itself, further supporting the idea of a central layout API rather than a generic UI toolkit. A third excerpt provides context about the ELK JSON graph format, which is relevant to how graphs are described and exchanged with the layout engine, aligning with the field\u2019s emphasis on graph data structures and serialization compatibility. A fourth excerpt notes the general role of elkjs in enabling ELK integration into the JS world, which supports the interpretation that elkjs serves as the bridge between the ELK framework and TypeScript/JavaScript environments, albeit without detailed API specifics. Taken together, these excerpts corroborate the presence of a central ELK class with a layout method and the use of a worker-based build, while also situating ELK\u2019s graph-data responsibilities within the ecosystem.",
+        "citations": [
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW",
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E",
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne"
+            ],
+            "title": "elkjs - npm"
+          },
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          }
+        ],
+        "confidence": "medium"
+      },
+      {
+        "field": "performance_and_bundle_size_comparison",
+        "reasoning": "The target field value discusses bundle size and performance considerations across several libraries, with a concrete, directly relevant claim about Graphology: the unpacked package being relatively large (2.73 MB) while the core functionality can be bundled under 1 MB when minified and gzipped, highlighting a trade-off between modularity and footprint. This exact information directly supports the aspect of the field value that evaluates bundle size and modularity for Graphology. The other selected excerpt reinforces Graphology as a versatile, multi-purpose graph library, which provides context that Graphology is a broad ecosystem rather than a single-purpose core, aligning with the field\u2019s interest in ecosystem breadth and the trade-off between bundle size and features. The reasoning connects the quantitative bundle-size claim to Graphology\u2019s modular packaging strategy and the qualitative note about its versatility, which are central to the field value\u2019s focus on size, modularity, and trade-offs. No excerpts directly contradict the bundle-size claim, and the included context helps frame how Graphology fits into a larger evaluation of similar libraries.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript."
+            ],
+            "title": "Home | Graphology"
+          }
+        ],
+        "confidence": "medium"
+      },
+      {
+        "field": "library_profiles.0",
+        "reasoning": "The strongest link to TypeScript ergonomics and generic typing is established by noting that the library ships with built-in type declarations and supports generic interfaces for node and edge attributes, enabling strong compile-time safety and robust IntelliSense. This directly supports the field\u2019s emphasis on API ergonomics with TypeScript generics and whether the library\u2019s own types should serve as the IR or be wrapped. The explicit mention that a graph can be directed, undirected or mixed, and can be simple or support parallel edges, addresses multi-edge support in a concrete way, including a mechanism for distinguishing edges when needed. The presence of a comprehensive standard library of graph theory algorithms and utilities, including traversals and clustering, speaks to the breadth of graph-algorithm coverage and reinforces the field\u2019s requirement to evaluate topological sort, SCCs, shortest paths, etc. The existence of built-in serialization capabilities and the claim of lossless round-trip JSON fidelity aligns with the field\u2019s serialization/fidelity criterion, indicating that graph data and edge keys can be preserved across serialization boundaries. A note about the library\u2019s ecosystem and its ongoing maintenance cadence, production usage (e.g., as a backing store for a visualization stack), and the stable TypeScript types suggesting an approach where native types could be used directly as the IR or wrapped for stability, provides context for production deployments and IR-wrapping guidance. Acknowledgment of Graphology\u2019s broad support, alignment with non-UI data-model-centric plugin needs, and the native multi-edge modeling capabilities collectively justify Graphology as a strong fit for the requested TypeScript CC plugin that ingests extractor outputs and emits a typed, serializable graph suitable for Mermaid/D2 rendering.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip"
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "other_libraries_analysis.performance_and_bundle_size",
+        "reasoning": "The fine-grained field value concerns performance behavior and bundle-size characteristics of a graph library. Excerpts that describe graphology as a robust and multipurpose graph object, capable of directed, undirected, mixed graphs, with support for self-loops and parallel edges, point to a modular, feature-rich core. A comprehensive standard library of graph algorithms and utilities suggests a broad API surface, which is a primary driver of bundle size and potential memory usage in practice, even if the excerpts do not provide explicit benchmarks. Typing declarations and integration notes indicate the library is designed to work well with TypeScript, which can influence typings footprint and how bundle tooling treeshakes or wraps the library. While none of the excerpts provide explicit performance benchmarks or exact bundle-size figures, they collectively imply a modular, feature-rich architecture where performance is largely influenced by memory management and how much of the library is pulled in by a given usage pattern, aligning with the general claims in the field value about linear-time core operations, memory-overhead-dominant performance characteristics, and the potential for tree-shaking to reduce size. The combination of modularity, broad algorithm coverage, and TS compatibility are the most relevant signals available in the excerpts to link to performance and bundle-size considerations, even though explicit numeric evidence is not supplied.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. "
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/graphology",
+            "excerpts": [
+              "graphology is a specification for a robust & multipurpose JavaScript Graph object and aiming at supporting various kinds of graphs under a same unified "
+            ],
+            "title": "graphology"
+          }
+        ],
+        "confidence": "low"
+      },
+      {
+        "field": "other_libraries_analysis.serialization_and_algorithms",
+        "reasoning": "The fine-grained field value describes Graphology as having robust JSON-based serialization (toJSON/fromJSON) with lossless round-tripping, preserving node/edge IDs, all typed attributes, and parallel-edge keys, plus versioning for schema migrations, in addition to a rich ecosystem of graph algorithms. The excerpts collectively confirm that Graphology is a robust, multipurpose graph object capable of representing directed, undirected, or mixed graphs, with support for self-loops and parallel edges, which aligns with the claimed feature set around structural fidelity and flexibility. They also indicate a TypeScript-friendly ecosystem with typings, and a comprehensive standard library of graph-theory algorithms and utilities, which matches the claim of broad algorithm coverage (topological sort, SCC, shortest path, traversals, community detection). However, none of the excerpts explicitly confirm the existence of the exact serialization methods (toJSON/fromJSON), preservation of parallel-edge keys in a serialized form, or explicit versioning in the serialized format. Therefore, the connection is strong for structural flexibility, typing, and algorithms, moderate for serialization specifics, and weak or unclear for explicit versioning and JSON fidelity claims. The most relevant passages directly corroborate the framework\u2019s versatility and algorithmic breadth, while still leaving serialization/versioning details unconfirmed in the provided excerpts. ",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://www.npmjs.com/package/graphology",
+            "excerpts": [
+              "graphology is a specification for a robust & multipurpose JavaScript Graph object and aiming at supporting various kinds of graphs under a same unified "
+            ],
+            "title": "graphology"
+          }
+        ],
+        "confidence": "medium"
+      },
+      {
+        "field": "maintenance_and_adoption_comparison.production_adoption_summary",
+        "reasoning": "The field value concerns real-world adoption and maintenance/production stability of graph libraries, focusing on whether a library is mature, battle-tested, and used in production. Excerpts that describe graphology as a robust, multipurpose Graph object and emphasize its flexible feature set (directed/undirected/multi-edge support) and its ecosystem capabilities (algorithms, utilities, and extensibility) are most directly relevant to assessing adoption viability. The excerpts that discuss graphology\u2019s use as a data model and its ability to support parallel edges substantiate stability and breadth of use. Excerpts that describe elkjs focus on layout rather than graph modeling, so they provide contextual background but are less directly supportive of maintenance/adoption for a graph-model library. Excerpts about ngraph.graph contribute to understanding alternative mature options and their adoption footprint, which informs comparative stability considerations. Excerpts that describe the ELK JSON format or general layout tooling provide peripheral context about ecosystems but do not directly attest to the maintenance/adoption status of a graph-model library. Taken together, the strongest support comes from the statements that graphology is a robust, multipurpose Graph object with a broad capability surface, followed by notes on its graph characteristics (directed/undirected/multi-edges). The other libraries are relevant for cross-library comparison but do not demonstrate production adoption claims within the provided excerpts. The overall synthesis indicates that graphology is positioned as a mature option within the ecosystem, though explicit production-adoption anecdotes are not all directly evidenced in the excerpts provided.",
+        "citations": [
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          },
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://www.npmjs.com/package/ngraph.graph",
+            "excerpts": [
+              "What to use as nodes and edges ? The most common and convenient choices are numbers and strings. You can associate arbitrary data with node"
+            ],
+            "title": "ngraph.graph"
+          },
+          {
+            "url": "https://eclipse.dev/elk/documentation/tooldevelopers/graphdatastructure/jsonformat.html",
+            "excerpts": [
+              "n\nThe JSON graph format has five basic elements: nodes, ports, labels, edges, and edge sections."
+            ],
+            "title": "ELK JSON Graph Format"
+          },
+          {
+            "url": "https://www.npmjs.com/package/elkjs",
+            "excerpts": [
+              "](https://www.eclipse.org/elk/) implements an infrastructure to connect diagram editors or viewers to automatic layout algorithms. This library takes the layout-relevant part of ELK and makes it available to the JavaScript world. E",
+              "The library consists of two main files:\n`elk-api.js` : Provides the API and only the API.\n`elk-worker.js` : Provides the code that actually knows how to lay out a graph. This is the file that is generated from ELK's Java code base using GW",
+              "Note that elkjs is not a diagramming framework itself - it computes positions for the elements of a diagram.\ne"
+            ],
+            "title": "elkjs - npm"
+          }
+        ],
+        "confidence": "medium"
+      },
+      {
+        "field": "library_profiles.0.api_ergonomics_and_typing",
+        "reasoning": "The fine-grained field value asserts that Graphology provides a first-class TypeScript experience, shipping with built-in declaration files (via a dedicated types package) and a generic API that lets developers define strongly-typed interfaces for node and edge attributes, such as Graph<NodeAttributes, EdgeAttributes>. The most directly supporting evidence is that the library exports type declarations usable with TypeScript and that the API is designed to be generic-friendly, enabling compile-time safety and robust IntelliSense. This aligns with excerpts that explicitly mention built-in type declarations and the generic-friendly API, including the ability to parameterize the graph with node and edge attribute types. Additional excerpts corroborate that Graphology is a robust Graph object for JavaScript and TypeScript and that there is a broader standard library and ecosystem, which reinforces the typing and TS-first orientation, even if not all details center exclusively on typing. The remaining excerpts provide supportive context about graph capabilities (directed/undirected/mixed graphs, parallel edges) and the existence of algorithms and utilities, which further situate Graphology within a mature TS-friendly graph library ecosystem but are less central to the specific TS-typing pattern described in the field value.\n",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "library_profiles.0.algorithm_coverage",
+        "reasoning": "The strongest support comes from excerpts that mention a comprehensive standard library of graph theory algorithms and utilities, which directly aligns with the described ecosystem of algorithms and utilities (including traversals and core graph operations). This excerpt confirms that a robust, multipurpose graph object is complemented by a broad algorithmic toolkit, which matches the field value\u2019s emphasis on topological sort, SCC, shortest path, traversals, and clustering. Additional excerpts reinforce the same theme by describing graphology as a robust, multipurpose Graph object for JavaScript and TypeScript, underscoring TypeScript integration and the ecosystem around graph operations. References to TypeScript type declarations and the ability to model directed/undirected/mixed graphs with optional parallel edges further support the notion of a strongly typed, flexible IR suitable for a typed plugin, which aligns with the field value\u2019s emphasis on TypeScript ergonomics and rich graph features. Additional excerpts from the GitHub description echo the same strength of ecosystem and capabilities, reinforcing the overall picture. The remaining excerpt addresses the directed/undirected/mixed nature and edge features, which are relevant factual context that complements the core claims about algorithmic coverage but is not as central as the explicit algorithmic ecosystem claim. Collectively, these excerpts map closely to the field value by confirming a rich algorithmic toolkit, TypeScript integration, and flexible graph modeling that are essential to the described plugin scenario.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "library_profiles.0.bundle_size",
+        "reasoning": "The fine-grained field value describes a quantified bundle footprint and notes that the core library is designed with modularity and tree-shaking in mind to achieve a small production bundle. Excerpts that discuss Graphology as a robust, multipurpose Graph object with TypeScript support and a modular design are most relevant: they establish that Graphology is TypeScript-friendly and modular, which provides justification for why a small production bundle might be achievable through selective imports. Additional excerpts emphasize that the library can be directed, undirected, or mixed, and that there is a standard library of algorithms and utilities, underscoring its broad feature set and potential impact on bundle size if not tree-shaken. Other excerpts confirm the existence of type declarations and the general ecosystem around Graphology, which are relevant for evaluating TypeScript ergonomics and the typing strategy (whether library-provided types or wrapped typings would serve as the IR). Taken together, these excerpts support the notion that while a small bundle is plausible due to modularity, the excerpts do not provide explicit bundle size figures.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          }
+        ],
+        "confidence": "low"
+      },
+      {
+        "field": "library_profiles.0.overall_assessment",
+        "reasoning": "The most relevant excerpt directly describes Graphology as a robust and multipurpose Graph object for JavaScript and TypeScript, which aligns with the claim of strong TypeScript support and a versatile core suitable for a non-UI, data-model-centric plugin. Supporting detail comes from text indicating Graphology can be used with TypeScript and provides a unified interface for various graph types, reinforcing its role as an excellent fit. Additional emphasis on TypeScript declarations and TS usage strengthens the TS-specific argument. Further, the description of a comprehensive standard library with algorithms and utilities corroborates that Graphology offers an extensive toolset needed for topological sorts, SCCs, shortest paths, and clustering, as mentioned in the field value. The notes about multi-edge support (directly mentioning directed/undirected/mixed graphs and parallel edges) back up the field value\u2019s claim regarding native multi-edge modeling and flexibility. Supplemental repository descriptions confirm these capabilities and the ecosystem around Graphology. Collectively, these excerpts support the field value\u2019s core claims: strong TypeScript integration, multi-edge modeling, broad algorithm/utility coverage, and serialization readiness, with an overall assessment that Graphology is a suitable, well-supported choice for the described plugin. ",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "library_profiles.0.library_name",
+        "reasoning": "Excerpts that explicitly reference Graphology establish the library's identity and its TypeScript compatibility, which are central to the fine-grained field value. The most directly corroborating claim is that Graphology exports type declarations and is designed for use with TypeScript, which ties to API ergonomics and typing requirements. Following that, a statement describing Graphology as a robust and multipurpose Graph object for JavaScript and TypeScript reinforces its suitability as a typed graph model for multi-language, serialized graphs. Additional excerpts describe Graphology's graph model flexibility (directed, undirected, mixed; self-loops; simple or parallel edges), which is crucial for multi-edge support and the ability to model complex dependency graphs. Further excerpts note the comprehensive standard library of graph theory algorithms and utilities, directly supporting needs like topological sort, SCC, shortest path, clustering, and serialization-related workflows. Extra excerpts from the GitHub page reiterate the same core properties (TS compatibility, graph capabilities), which strengthens the overall assessment. Taken together, these excerpts corroborate Graphology as a viable Graph ML/JS TS library with rich typing, multi-edge support, and a broad algorithmic/tooling surface relevant to the user\u2019s criteria. They do not present contradictions; rather, they collectively support Graphology as a strong candidate with robust TS integration and graph capabilities.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. "
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "library_profiles.0.multi_edge_support",
+        "reasoning": "The most direct support comes from statements that a graph can be directed, undirected or mixed and that it can have parallel edges, which aligns with multi-edge scenarios. One excerpt explicitly notes that graphology allows parallel edges and can be simple or support parallel edges, indicating native support for multi-graphs. Another excerpt reinforces that a graph can be directed, undirected, or mixed and that parallel edges are supported, which maps to the requirement of multiple distinct edges between the same two nodes. A third excerpt mentions graphology as a robust and multipurpose Graph object for JavaScript and TypeScript, which underpins its suitability for TS typing and integration in typed pipelines. Additional content points to type declarations and TS usage that can influence how the library\u2019s own types are consumed (whether as the IR or wrapped), which is relevant for API ergonomics with TypeScript generics. Although some excerpts focus on the broader library ecosystem or general capabilities (algorithms, utilities, and GitHub descriptions) they still provide contextual support for how multi-edge modeling interacts with serialization, attribute schemas, and extensibility. Together, these excerpts build a picture where multi-edge support is a native feature, accessible via a dedicated multi-graph variant or via unique edge keys, with per-edge attribute objects supporting rich metadata, which aligns with the finegrained field value semantics.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. "
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          }
+        ],
+        "confidence": "high"
+      },
+      {
+        "field": "performance_and_bundle_size_comparison.performance_summary",
+        "reasoning": "The field value asserts that core operations in Graphology have linear-time complexity and that performance is good for typical graph sizes, with overhead largely coming from JavaScript memory management rather than algorithmic inefficiency. The first excerpt states that Graphology includes a comprehensive standard library of graph theory algorithms and utilities, and explicitly notes that community tests indicate most core operations have linear-time complexity. It also mentions that performance is generally good for typical graph sizes and that any overhead is primarily due to memory management rather than algorithmic inefficiency. These points directly support the Graphology performance aspects in the field value, particularly the linear-time core operations and the memory-management-related overhead. The second excerpt merely describes Graphology as a robust multipurpose graph object for JavaScript/TypeScript, which provides contextual support but does not advance the performance specifics. Taken together, the most relevant excerpt substantiates the claim about linear-time core operations and the nature of performance overhead, while the other excerpt adds contextual background about Graphology\u2019s breadth without strong performance detail.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc."
+            ],
+            "title": "Home | Graphology"
+          }
+        ],
+        "confidence": "medium"
+      },
+      {
+        "field": "library_profiles.0.ir_strategy_guidance",
+        "reasoning": "The claim to consider is whether Graphology\u2019s native TypeScript types can serve as the intermediate representation (IR) or if wrapping them in a stable, versioned schema is better for long-term compatibility. Evidence shows that Graphology provides TypeScript type declarations that can be used with TS, which supports the idea that native typings are usable as an IR. It also emphasizes that Graphology is a robust and multipurpose Graph object for JavaScript and TypeScript, which reinforces its suitability as a TS-friendly core. Additional excerpts highlight that Graphology offers a comprehensive standard library and is backed by a repository and ecosystem, reinforcing its maturity and stability as a TS-first library. While not every detail about schema evolution is explicit, the combination of native typings availability and the library\u2019s robustness underpins the consideration of wrapping native types in a stable schema to shield against breaking changes. These points collectively support the idea that using Graphology\u2019s native TS typings is viable for initial development, but a versioned schema wrapper could improve forward compatibility across major upgrades. The strongest support comes from explicit mention of TypeScript typings being installed and usable in TS projects, plus the library\u2019s robust TS/JS nature. The later statements about the library\u2019s maturity and ecosystem provide context for its long-term viability, which aligns with considering a protective wrapper strategy.",
+        "citations": [
+          {
+            "url": "https://graphology.github.io/",
+            "excerpts": [
+              "Note that `graphology` also exports type declaration that are installed along using peer dependencies so it can be used with [TypeScript](https://www.typ",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScript.",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges.",
+              "Along with this `Graph` object, one will also find a comprehensive standard library full of graph theory algorithms and common utilities such as graph generators, layouts, traversals etc."
+            ],
+            "title": "Home | Graphology"
+          },
+          {
+            "url": "https://github.com/graphology/graphology",
+            "excerpts": [
+              "graphology is a robust & multipurpose Graph object for JavaScript and TypeScript. It aims at supporting various kinds of graphs with the same unified interface. ",
+              "`graphology` is a robust & multipurpose `Graph` object for JavaScript and TypeScrip",
+              "A `graphology` graph can therefore be directed, undirected or mixed, allow self-loops or not, and can be simple or support parallel edges."
+            ],
+            "title": "GitHub - graphology/graphology: A robust & multipurpose Graph object for JavaScript & TypeScript."
+          }
+        ],
+        "confidence": "medium"
+      }
+    ],
+    "type": "json",
+    "beta_fields": null,
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "executive_summary": {
+          "type": "string",
+          "description": "A high-level summary of the comparative analysis, key findings, and the final recommendation for the most suitable TypeScript graph library for building the specified code dependency plugin."
+        },
+        "recommended_library": {
+          "type": "string",
+          "description": "The name of the single graph library that is ultimately recommended as the best fit for the project's requirements."
+        },
+        "recommendation_rationale": {
+          "type": "string",
+          "description": "A detailed justification for the final recommendation, explaining how the chosen library excels across the most critical criteria, such as TypeScript ergonomics, multi-edge support, serialization fidelity, and ecosystem maturity."
+        },
+        "library_profiles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "library_name": {
+                "type": "string",
+                "description": "The name of the graph library being profiled."
+              },
+              "api_ergonomics_and_typing": {
+                "type": "string",
+                "description": "Analysis of API ergonomics with TypeScript, including the quality of type definitions and support for generics for node/edge attributes."
+              },
+              "multi_edge_support": {
+                "type": "string",
+                "description": "Details on the library's native support for modeling multiple, distinct edges between the same two nodes, each with its own attributes."
+              },
+              "serialization_fidelity": {
+                "type": "string",
+                "description": "Evaluation of the library's JSON serialization capabilities, including round-trip fidelity, preservation of attributes and multi-edges, and schema design."
+              },
+              "algorithm_coverage": {
+                "type": "string",
+                "description": "Overview of the graph theory algorithms available, such as topological sort, SCC, shortest paths, and clustering, whether in-core or via plugins."
+              },
+              "performance_characteristics": {
+                "type": "string",
+                "description": "Information on runtime performance, any available benchmarks, and suitability for large-scale graphs."
+              },
+              "bundle_size": {
+                "type": "string",
+                "description": "Metrics on the library's bundle size (e.g., ESM, minified + gzipped) and notes on tree-shaking effectiveness for a data-model-only use case."
+              },
+              "maintenance_and_adoption": {
+                "type": "string",
+                "description": "Assessment of maintenance velocity (2024-2026), community health, and notable production users or case studies."
+              },
+              "ir_strategy_guidance": {
+                "type": "string",
+                "description": "Guidance on whether the library's native types are suitable as an Intermediate Representation (IR) or if wrapping them is recommended."
+              },
+              "overall_assessment": {
+                "type": "string",
+                "description": "A summary of the library's key pros, cons, and overall fitness for the specified plugin requirements."
+              }
+            },
+            "required": [
+              "library_name",
+              "api_ergonomics_and_typing",
+              "multi_edge_support",
+              "serialization_fidelity",
+              "algorithm_coverage",
+              "performance_characteristics",
+              "bundle_size",
+              "maintenance_and_adoption",
+              "ir_strategy_guidance",
+              "overall_assessment"
+            ],
+            "additionalProperties": false
+          },
+          "description": "In-depth technical profiles for each of the primary evaluated graph libraries (Graphology, ngraph, Cytoscape.js). Each profile will detail API ergonomics with TypeScript generics, multi-edge support implementation, serialization fidelity and schema, available algorithms, performance benchmarks, bundle size metrics, maintenance velocity (2024-2026), and known production users."
+        },
+        "typescript_ergonomics_comparison": {
+          "type": "string",
+          "description": "A comparative analysis of the developer experience (DX) and API ergonomics when using TypeScript generics for typed node and edge attributes across the evaluated libraries. Includes examples of typing patterns and potential pitfalls."
+        },
+        "multi_edge_support_comparison": {
+          "type": "string",
+          "description": "A detailed comparison of how each library models and handles multiple edges between the same two nodes, including the ability to store distinct attributes for each parallel edge and the API for accessing them."
+        },
+        "serialization_and_ir_strategy_comparison": {
+          "type": "string",
+          "description": "An analysis of each library's JSON serialization capabilities, including round-trip guarantees, preservation of multi-edges and metadata, and strategies for schema evolution. Provides guidance on whether to use native types as the Intermediate Representation (IR) or wrap them in a stable schema."
+        },
+        "algorithm_coverage_comparison": {
+          "type": "string",
+          "description": "A comparative overview of the graph theory algorithms (e.g., topological sort, Strongly Connected Components (SCC), shortest path, clustering) available either in-core or through the ecosystem of each library."
+        },
+        "performance_and_bundle_size_comparison": {
+          "type": "object",
+          "properties": {
+            "bundle_size_summary": {
+              "type": "string",
+              "description": "A comparative summary of bundle size metrics (ESM, min+gzip) and tree-shaking effectiveness across the evaluated libraries."
+            },
+            "performance_summary": {
+              "type": "string",
+              "description": "A comparative summary of runtime performance characteristics and any available benchmarks on representative graphs."
+            }
+          },
+          "required": [
+            "bundle_size_summary",
+            "performance_summary"
+          ],
+          "additionalProperties": false
+        },
+        "maintenance_and_adoption_comparison": {
+          "type": "object",
+          "properties": {
+            "maintenance_velocity_summary": {
+              "type": "string",
+              "description": "A comparative summary of maintenance activity, including commit frequency and release cadence from 2024-2026."
+            },
+            "community_health_summary": {
+              "type": "string",
+              "description": "A comparative assessment of community health indicators like the number of contributors, bus factor, and issue/PR activity."
+            },
+            "production_adoption_summary": {
+              "type": "string",
+              "description": "A comparative overview of known production users and significant case studies for each library."
+            }
+          },
+          "required": [
+            "maintenance_velocity_summary",
+            "community_health_summary",
+            "production_adoption_summary"
+          ],
+          "additionalProperties": false
+        },
+        "live_reload_preview_architecture": {
+          "type": "string",
+          "description": "A description of architectural patterns for implementing a live-reload browser preview. This covers the flow from the graph model, through JSON serialization, to a renderer like Mermaid or D2."
+        },
+        "elkjs_role_and_integration": {
+          "type": "object",
+          "properties": {
+            "role_clarification": {
+              "type": "string",
+              "description": "Clarification of elkjs's role as a dedicated layout engine, distinct from a graph modeling library."
+            },
+            "api_and_configuration": {
+              "type": "string",
+              "description": "Details on the TypeScript API, the richness of layout configuration options, and any build considerations (e.g., WASM, workers)."
+            },
+            "input_output_schema": {
+              "type": "string",
+              "description": "Description of the ELK-JSON format it expects as input and returns as output, and how to adapt other graph models to it."
+            },
+            "performance_notes": {
+              "type": "string",
+              "description": "Analysis of layout performance on medium to large graphs and strategies for optimization."
+            },
+            "integration_patterns": {
+              "type": "string",
+              "description": "Architectural patterns for integrating elkjs into a live-reload preview pipeline with renderers like Mermaid or D2."
+            },
+            "limitations_and_fallbacks": {
+              "type": "string",
+              "description": "Known limitations of the library and recommended fallback strategies for very large or dynamic graphs."
+            }
+          },
+          "required": [
+            "role_clarification",
+            "api_and_configuration",
+            "input_output_schema",
+            "performance_notes",
+            "integration_patterns",
+            "limitations_and_fallbacks"
+          ],
+          "additionalProperties": false
+        },
+        "other_libraries_analysis": {
+          "type": "object",
+          "properties": {
+            "library_name": {
+              "type": "string",
+              "description": "The name of the library being analyzed."
+            },
+            "typescript_typing_quality": {
+              "type": "string",
+              "description": "Assessment of the library's TypeScript support, including quality of types and support for generics."
+            },
+            "multi_edge_support": {
+              "type": "string",
+              "description": "Analysis of the library's capability to model multiple edges between the same nodes."
+            },
+            "serialization_and_algorithms": {
+              "type": "string",
+              "description": "Notes on the library's serialization features and the breadth of its algorithm coverage."
+            },
+            "performance_and_bundle_size": {
+              "type": "string",
+              "description": "Summary of the library's performance characteristics and bundle size."
+            },
+            "overall_fit_and_summary": {
+              "type": "string",
+              "description": "A concluding summary of the library's pros, cons, and overall fit for the non-UI data model use case."
+            }
+          },
+          "required": [
+            "library_name",
+            "typescript_typing_quality",
+            "multi_edge_support",
+            "serialization_and_algorithms",
+            "performance_and_bundle_size",
+            "overall_fit_and_summary"
+          ],
+          "additionalProperties": false
+        },
+        "rising_alternatives_2024_2026": {
+          "type": "string",
+          "description": "An overview of any new or rising TypeScript-native graph libraries identified during the research that show promise but may not yet have the maturity or feature-completeness of the primary candidates."
+        },
+        "decision_matrix_summary": {
+          "type": "string",
+          "description": "A concluding summary presented as a decision matrix or a structured comparison, weighing each library against the critical plugin requirements: Typed Attributes, Multi-Edge Support, Serialization, Algorithms, Performance, and Maintenance."
+        }
+      },
+      "required": [
+        "executive_summary",
+        "recommended_library",
+        "recommendation_rationale",
+        "library_profiles",
+        "typescript_ergonomics_comparison",
+        "multi_edge_support_comparison",
+        "serialization_and_ir_strategy_comparison",
+        "algorithm_coverage_comparison",
+        "performance_and_bundle_size_comparison",
+        "maintenance_and_adoption_comparison",
+        "live_reload_preview_architecture",
+        "elkjs_role_and_integration",
+        "other_libraries_analysis",
+        "rising_alternatives_2024_2026",
+        "decision_matrix_summary"
+      ],
+      "additionalProperties": false
+    },
+    "content_file": "2026-04-23-research-graph-libs.md"
+  }
+}
