@@ -7,5 +7,6 @@ export class InvariantError extends Error {
     super(message)
     this.name = 'InvariantError'
     this.diagPayload = payload
+    Object.setPrototypeOf(this, InvariantError.prototype)
   }
 }

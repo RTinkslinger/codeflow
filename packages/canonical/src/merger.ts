@@ -7,7 +7,8 @@ interface MergeResult {
   relationships: Relationship[]
 }
 
-export function canonicalMerge(symbols: CFSymbol[], root: string, relationships: Relationship[] = []): MergeResult {
+export function canonicalMerge(symbols: CFSymbol[], _root: string, relationships: Relationship[] = []): MergeResult {
+  // _root: reserved for posixRelative calls in later tasks (Task 18 production pipeline)
   // THE LOAD-BEARING INVARIANT: one file on disk → exactly one node in the merged graph.
   //
   // Two failure modes this must guard:
@@ -27,6 +28,7 @@ export function canonicalMerge(symbols: CFSymbol[], root: string, relationships:
     // Check failure mode A: same id, different canonical paths
     const existingWinnerId = byId.get(sym.id)
     if (existingWinnerId !== undefined) {
+      // O(n) scan — acceptable at v1 scale; a reverse winnerId→CFSymbol map would make this O(1)
       const winner = [...byPath.values()].find(s => s.id === existingWinnerId)
       if (winner !== undefined && canonicalizePath(winner.absPath) !== canonPath) {
         throw new InvariantError(

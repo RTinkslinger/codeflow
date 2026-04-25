@@ -34,3 +34,43 @@ describe('canonicalMerge — one file on disk → one node', () => {
     ))
   })
 })
+
+const rel = (from: string, to: string, confidence: 'inferred' | 'verified' = 'inferred') => ({
+  id: `${from}->${to}`,
+  from, to,
+  kind: 'imports' as const,
+  language: 'ts' as const,
+  confidence,
+})
+
+describe('canonicalMerge — relationship rewriting', () => {
+  it('rewrites loser id in relationship endpoints to winner id', () => {
+    const a = { ...sym('tsc:ts:src/a:fn'), absPath: '/p/a.ts', relPath: 'a.ts' }
+    const b = { ...sym('scip:ts:src/a:fn'), absPath: '/p/a.ts', relPath: 'a.ts' }
+    const c = sym('tsc:ts:src/b:fn') // separate file
+    // relationship from loser (b) to c should be rewritten to winner (a) → c
+    const relationship = rel('scip:ts:src/a:fn', 'tsc:ts:src/b:fn')
+    const result = canonicalMerge([a, b, c], '/p', [relationship])
+    expect(result.relationships).toHaveLength(1)
+    expect(result.relationships[0]?.from).toBe('tsc:ts:src/a:fn')
+  })
+
+  it('drops self-loops created by dedup', () => {
+    const a = { ...sym('tsc:ts:src/a:fn'), absPath: '/p/a.ts', relPath: 'a.ts' }
+    const b = { ...sym('scip:ts:src/a:fn'), absPath: '/p/a.ts', relPath: 'a.ts' }
+    // a relationship from loser to winner becomes self-loop after remap — must be dropped
+    const selfLoopRel = rel('scip:ts:src/a:fn', 'tsc:ts:src/a:fn')
+    const result = canonicalMerge([a, b], '/p', [selfLoopRel])
+    expect(result.relationships).toHaveLength(0)
+  })
+
+  it('prefers verified relationship over inferred with same (from, to, kind) key', () => {
+    const a = sym('tsc:ts:src/a:fn')
+    const b = sym('tsc:ts:src/b:fn')
+    const inferred = rel(a.id, b.id, 'inferred')
+    const verified = rel(a.id, b.id, 'verified')
+    const result = canonicalMerge([a, b], '/p', [inferred, verified])
+    expect(result.relationships).toHaveLength(1)
+    expect(result.relationships[0]?.confidence).toBe('verified')
+  })
+})
