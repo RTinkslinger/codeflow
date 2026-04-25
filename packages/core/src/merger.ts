@@ -40,3 +40,30 @@ export function mergeIRs(irs: IR[]): IR {
     relationships: [...relMap.values()],
   }
 }
+
+export interface MergeDiff {
+  added: Relationship[]
+  removed: Relationship[]
+  upgraded: Relationship[]
+}
+
+export function computeDiff(previous: IR | null, current: IR): MergeDiff {
+  if (!previous) return { added: current.relationships, removed: [], upgraded: [] }
+
+  const prevByKey = new Map(previous.relationships.map(r => [`${r.from}::${r.to}::${r.kind}`, r]))
+  const currByKey = new Map(current.relationships.map(r => [`${r.from}::${r.to}::${r.kind}`, r]))
+
+  const added: Relationship[] = []
+  const removed: Relationship[] = []
+  const upgraded: Relationship[] = []
+
+  for (const [key, rel] of currByKey) {
+    const prev = prevByKey.get(key)
+    if (!prev) { added.push(rel) }
+    else if (prev.confidence === 'inferred' && rel.confidence === 'verified') { upgraded.push(rel) }
+  }
+  for (const [key, rel] of prevByKey) {
+    if (!currByKey.has(key)) removed.push(rel)
+  }
+  return { added, removed, upgraded }
+}

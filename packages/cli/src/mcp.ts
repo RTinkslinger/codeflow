@@ -5,7 +5,7 @@ import { ScipTypescriptExtractor } from '@codeflow/extractor-scip-typescript'
 import { ScipPythonExtractor } from '@codeflow/extractor-scip-python'
 import { renderMermaid } from '@codeflow/renderer-mermaid'
 import { PreviewServer, WSBroadcaster, FileWatcher } from '@codeflow/preview'
-import { mergeIRs, createError } from '@codeflow/core'
+import { mergeIRs, createError, computeDiff } from '@codeflow/core'
 import { canonicalMerge } from '@codeflow/canonical'
 import { LaneStateMachine, derivePreviewStatus } from './state.js'
 import type { LaneState, PreviewStatus } from './state.js'
@@ -36,8 +36,10 @@ export class CodeflowMCP {
   private previews = new Map<string, PreviewRecord>()
   private fastExtractor = new DepcruiseExtractor()
   private pyExtractor = new TreeSitterPythonExtractor()
+  private scipTsExtractor = new ScipTypescriptExtractor()
+  private scipPyExtractor = new ScipPythonExtractor()
 
-  async startPreview(opts: { path: string }): Promise<{ url: string; previewId: string; status: PreviewStatus }> {
+  async startPreview(opts: { path: string; verified?: boolean }): Promise<{ url: string; previewId: string; status: PreviewStatus }> {
     // Return existing preview for same path (v1 share-per-path)
     for (const p of this.previews.values()) {
       if (p.path === opts.path) return { url: p.url, previewId: p.previewId, status: derivePreviewStatus([p.fastLane.state, p.verifiedLane.state]) }
@@ -64,9 +66,13 @@ export class CodeflowMCP {
 
     // Start fast extraction in background (async-first)
     this.runFastExtraction(record)
+    if (opts.verified) this.runVerifiedExtraction(record)
 
     // Set up file watcher
-    watcher.start(opts.path, () => this.runFastExtraction(record))
+    watcher.start(opts.path, () => {
+      this.runFastExtraction(record)
+      if (opts.verified) this.runVerifiedExtraction(record)
+    })
 
     // Idle GC
     this.resetIdleTimer(record)
@@ -108,6 +114,41 @@ export class CodeflowMCP {
       record.broadcaster.broadcast({ type: 'error', error: { code: 'EXTRACTION_EXCEPTION', detail: String(err) } })
     }
 
+    this.resetIdleTimer(record)
+  }
+
+  private async runVerifiedExtraction(record: PreviewRecord): Promise<void> {
+    if (record.verifiedLane.state === 'aborted') return
+    record.verifiedLane.onSave()
+
+    try {
+      const [tsResult, pyResult] = await Promise.allSettled([
+        this.scipTsExtractor.extract({ path: record.path, root: record.path }),
+        this.scipPyExtractor.extract({ path: record.path, root: record.path }),
+      ])
+
+      const irs: IR[] = []
+      if (tsResult.status === 'fulfilled') irs.push(tsResult.value.ir)
+      if (pyResult.status === 'fulfilled') irs.push(pyResult.value.ir)
+
+      if (irs.length > 0) {
+        const merged = mergeIRs(irs)
+        const { symbols, relationships } = canonicalMerge(merged.symbols, record.path, merged.relationships)
+        const canonical = { ...merged, symbols, relationships }
+        const diff = computeDiff(record.verifiedIR, canonical)
+        canonical.meta.diff = diff
+        record.verifiedIR = canonical
+        const mermaid = renderMermaid(canonical)
+        record.broadcaster.broadcast({ type: 'verified_ready', mermaid, badge: '● verified', diff })
+        record.verifiedLane.onOk()
+      } else {
+        record.verifiedLane.onFail()
+        // Lane-scoped: fast view survives — broadcast warning, not error
+        record.broadcaster.broadcast({ type: 'update', mermaid: record.fastIR ? renderMermaid(record.fastIR) : 'graph LR', badge: '● fast view (verified failed)' })
+      }
+    } catch (err) {
+      record.verifiedLane.onFail()
+    }
     this.resetIdleTimer(record)
   }
 
@@ -185,8 +226,5 @@ export class CodeflowMCP {
   }
 }
 
-// Suppress unused variable warning for SCIP extractors (used in future verified-lane tasks)
-void ScipTypescriptExtractor
-void ScipPythonExtractor
 // Keep LaneState in scope for future verified-lane wiring
 type _LaneState = LaneState
