@@ -73,7 +73,8 @@ function parseSCIPOutputPy(scipFile: string, root: string, extractorName: string
   for (const doc of docs) {
     const relPath = doc['relative_path'] as string | undefined
     if (!relPath) continue
-    const canonAbs = canonicalizePath(path.join(root, relPath))
+    const absPath = path.isAbsolute(relPath) ? relPath : path.join(root, relPath)
+    const canonAbs = canonicalizePath(absPath)
     let canonRel: string
     try { canonRel = posixRelative(root, canonAbs) }
     catch { continue }
