@@ -17,8 +17,32 @@ export function loadFixture(name: string): string {
   return path.join(FIXTURES_ROOT, name)
 }
 
+/**
+ * Deep structural equality ignoring object key order.
+ * Arrays are compared in insertion order — use `sortedIREqual` if extractor output order is unstable.
+ */
 export function irEqual(a: unknown, b: unknown): boolean {
   return JSON.stringify(sortKeys(a)) === JSON.stringify(sortKeys(b))
+}
+
+export function sortedIREqual(a: unknown, b: unknown): boolean {
+  return irEqual(sortArrays(a), sortArrays(b))
+}
+
+function sortArrays(obj: unknown): unknown {
+  if (Array.isArray(obj)) {
+    const sorted = obj.map(sortArrays)
+    if (sorted.length > 0 && typeof sorted[0] === 'object' && sorted[0] !== null && 'id' in (sorted[0] as object)) {
+      return (sorted as Array<{ id: string }>).sort((a, b) => a.id.localeCompare(b.id))
+    }
+    return sorted
+  }
+  if (obj !== null && typeof obj === 'object') {
+    return Object.fromEntries(
+      Object.entries(obj as Record<string, unknown>).map(([k, v]) => [k, sortArrays(v)])
+    )
+  }
+  return obj
 }
 
 function sortKeys(obj: unknown): unknown {
@@ -59,8 +83,8 @@ export function mockExtractorOutput(opts: MockOptions = {}) {
 }
 
 export function snapshotIR(ir: unknown, label: string): void {
-  const __dirnameSnap = path.dirname(fileURLToPath(import.meta.url))
-  const dir = path.resolve(__dirnameSnap, '../../../tests/snapshots')
+  if (!/^[\w-]+$/.test(label)) throw new Error(`snapshotIR: label must be alphanumeric/hyphens, got: ${label}`)
+  const dir = path.resolve(__dirname, '../../../tests/snapshots')
   fs.mkdirSync(dir, { recursive: true })
   fs.writeFileSync(path.join(dir, `${label}.json`), JSON.stringify(ir, null, 2))
 }
@@ -70,10 +94,5 @@ export function assertInvariants(ir: { symbols: Array<{ id: string; absPath: str
   const uniqueIds = new Set(ids)
   if (ids.length !== uniqueIds.size) {
     throw new Error(`IR invariant violated: duplicate symbol IDs found`)
-  }
-  const paths = ir.symbols.map(s => s.absPath)
-  const uniquePaths = new Set(paths)
-  if (paths.length !== uniquePaths.size) {
-    throw new Error(`IR invariant violated: duplicate absPath found — canonicalMerge was not called`)
   }
 }

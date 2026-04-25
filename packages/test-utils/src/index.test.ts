@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { loadFixture, irEqual, mockExtractorOutput, assertInvariants, snapshotIR } from './index.js'
+import { loadFixture, irEqual, sortedIREqual, mockExtractorOutput, assertInvariants, snapshotIR } from './index.js'
 import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -22,6 +22,19 @@ describe('irEqual', () => {
   })
 })
 
+describe('sortedIREqual', () => {
+  it('compares arrays of objects with id fields regardless of insertion order', () => {
+    const a = { symbols: [{ id: 'b', name: 'B' }, { id: 'a', name: 'A' }] }
+    const b = { symbols: [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }] }
+    expect(sortedIREqual(a, b)).toBe(true)
+  })
+  it('returns false when symbol content differs', () => {
+    const a = { symbols: [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }] }
+    const c = { symbols: [{ id: 'a', name: 'A' }, { id: 'b', name: 'X' }] }
+    expect(sortedIREqual(a, c)).toBe(false)
+  })
+})
+
 describe('mockExtractorOutput', () => {
   it('returns an IR with injected symbols', () => {
     const ir = mockExtractorOutput({ symbolCount: 3 })
@@ -31,18 +44,18 @@ describe('mockExtractorOutput', () => {
 })
 
 describe('assertInvariants', () => {
-  it('throws on duplicate absPath', () => {
+  it('throws on duplicate symbol IDs', () => {
+    const sym = { id: 'dup:id', absPath: '/a.ts' }
+    expect(() => assertInvariants({ symbols: [sym, sym] })).toThrow('duplicate symbol IDs')
+  })
+  it('does not throw when multiple symbols share the same absPath', () => {
     const ir = {
       symbols: [
         { id: 'a', absPath: '/mock/file.ts' },
         { id: 'b', absPath: '/mock/file.ts' },
       ],
     }
-    expect(() => assertInvariants(ir)).toThrow('duplicate absPath')
-  })
-  it('throws on duplicate symbol IDs', () => {
-    const sym = { id: 'dup:id', absPath: '/a.ts' }
-    expect(() => assertInvariants({ symbols: [sym, sym] })).toThrow('duplicate symbol IDs')
+    expect(() => assertInvariants(ir)).not.toThrow()
   })
 })
 
