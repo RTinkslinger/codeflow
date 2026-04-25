@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process'
 import path from 'node:path'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const pkg = JSON.parse(readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8')) as { version: string }
+const pkg = JSON.parse(readFileSync(path.resolve(__dirname, '../../../package.json'), 'utf-8')) as { version: string }
 
 const args = process.argv.slice(2)
 
