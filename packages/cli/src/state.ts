@@ -36,7 +36,6 @@ export function derivePreviewStatus(laneStates: LaneState[]): PreviewStatus {
   const nonAborted = laneStates.filter(s => s !== 'aborted')
   if (nonAborted.length > 0 && nonAborted.every(s => s === 'error')) return 'error'
   if (laneStates.some(s => s === 'extracting' || s === 'dirty')) return 'extracting'
-  // One lane error + other lane active → 'extracting' (fast-view survives verified failure)
-  if (laneStates.some(s => s === 'error')) return 'extracting'
+  // One lane error + other lane idle (has IR) → 'ready' (fast-view is available, verified won't retry)
   return 'ready'
 }

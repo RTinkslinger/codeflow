@@ -48,14 +48,14 @@ describe('assertInvariants', () => {
     const sym = { id: 'dup:id', absPath: '/a.ts' }
     expect(() => assertInvariants({ symbols: [sym, sym] })).toThrow('duplicate symbol IDs')
   })
-  it('does not throw when multiple symbols share the same absPath', () => {
+  it('throws when multiple symbols share the same absPath (one file → one node invariant)', () => {
     const ir = {
       symbols: [
         { id: 'a', absPath: '/mock/file.ts' },
         { id: 'b', absPath: '/mock/file.ts' },
       ],
     }
-    expect(() => assertInvariants(ir)).not.toThrow()
+    expect(() => assertInvariants(ir)).toThrow(/duplicate absPath/)
   })
 })
 

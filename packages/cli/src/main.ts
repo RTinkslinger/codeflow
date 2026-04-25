@@ -38,7 +38,7 @@ if (args[0] === 'render_once' && args[1]) {
     })
 } else {
   // MCP JSON-RPC stdio mode
-  const logger = createLogger('info')
+  const logger = await createLogger('info')
   const mcp = new CodeflowMCP()
 
   process.stdin.setEncoding('utf-8')
@@ -60,7 +60,10 @@ if (args[0] === 'render_once' && args[1]) {
 async function handleRequest(mcp: CodeflowMCP, line: string, logger: ReturnType<typeof createLogger>): Promise<void> {
   let req: { id: unknown; method: string; params?: Record<string, unknown> }
   try { req = JSON.parse(line) }
-  catch { return }
+  catch {
+    process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }) + '\n')
+    return
+  }
   try {
     let result: unknown
     switch (req.method) {
@@ -69,10 +72,14 @@ async function handleRequest(mcp: CodeflowMCP, line: string, logger: ReturnType<
       case 'stop_preview': result = await mcp.stopPreview(req.params as { previewId: string }); break
       case 'get_ir': result = await mcp.getIR(req.params as { previewId: string }); break
       case 'render_once': result = await mcp.renderOnce(req.params as { path: string }); break
-      default: throw new Error(`Unknown method: ${req.method}`)
+      default: {
+        process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: req.id, error: { code: -32601, message: `Method not found: ${req.method}` } }) + '\n')
+        return
+      }
     }
-    process.stdout.write(JSON.stringify({ id: req.id, result }) + '\n')
+    process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: req.id, result }) + '\n')
   } catch (err) {
-    process.stdout.write(JSON.stringify({ id: req.id, error: { message: String(err) } }) + '\n')
+    logger.error({ err }, 'handleRequest error')
+    process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: req.id, error: { code: -32603, message: String(err) } }) + '\n')
   }
 }

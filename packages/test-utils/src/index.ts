@@ -96,4 +96,9 @@ export function assertInvariants(ir: { symbols: Array<{ id: string; absPath: str
   if (ids.length !== uniqueIds.size) {
     throw new Error(`IR invariant violated: duplicate symbol IDs found`)
   }
+  const paths = ir.symbols.map(s => s.absPath)
+  const uniquePaths = new Set(paths)
+  if (paths.length !== uniquePaths.size) {
+    throw new Error(`IR invariant violated: duplicate absPath values found — one file on disk must produce exactly one node`)
+  }
 }

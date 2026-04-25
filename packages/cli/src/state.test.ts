@@ -53,8 +53,8 @@ describe('derivePreviewStatus', () => {
     expect(derivePreviewStatus(['error', 'error'])).toBe('error')
   })
 
-  it('one lane error, other lane idle → dirty (fast view survives)', () => {
-    expect(derivePreviewStatus(['error', 'idle'])).toBe('extracting')
+  it('one lane error, other lane idle → ready (fast view available, verified won\'t retry)', () => {
+    expect(derivePreviewStatus(['error', 'idle'])).toBe('ready')
   })
 
   it('all idle with output → ready', () => {

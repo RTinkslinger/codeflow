@@ -8,7 +8,7 @@ export const LOG_DIR = path.join(os.homedir(), '.codeflow', 'logs')
 const MAX_LOG_AGE_DAYS = 14
 const MAX_LOG_SIZE = '50m'
 
-export function createLogger(level: string = 'info', pretty = false) {
+export async function createLogger(level: string = 'info', pretty = false) {
   fs.mkdirSync(LOG_DIR, { recursive: true })
   pruneOldLogs()
 
@@ -18,10 +18,7 @@ export function createLogger(level: string = 'info', pretty = false) {
   }
 
   const today = new Date().toISOString().slice(0, 10)
-  const dest = pinroll(path.join(LOG_DIR, `server-${today}.log`), {
-    size: MAX_LOG_SIZE,
-    dateFormat: 'YYYY-MM-DD',
-  })
+  const dest = await pinroll({ file: path.join(LOG_DIR, `server-${today}.log`), size: MAX_LOG_SIZE, dateFormat: 'YYYY-MM-DD' })
   return pino({ level }, dest)
 }
 

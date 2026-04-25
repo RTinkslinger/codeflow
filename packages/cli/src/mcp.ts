@@ -148,6 +148,7 @@ export class CodeflowMCP {
       }
     } catch (err) {
       record.verifiedLane.onFail()
+      record.lastError = err
       record.broadcaster.broadcast({ type: 'update', mermaid: record.fastIR ? renderMermaid(record.fastIR) : 'graph LR', badge: '● fast view (verified failed)' })
     }
     this.resetIdleTimer(record)
@@ -201,7 +202,9 @@ export class CodeflowMCP {
     if (pyResult.status === 'fulfilled') irs.push(pyResult.value.ir)
 
     const merged = mergeIRs(irs)
-    const mermaid = renderMermaid(merged)
+    const { symbols, relationships } = canonicalMerge(merged.symbols, opts.path, merged.relationships)
+    const canonical = { ...merged, symbols, relationships }
+    const mermaid = renderMermaid(canonical)
 
     const fs = await import('node:fs')
     const path = await import('node:path')
