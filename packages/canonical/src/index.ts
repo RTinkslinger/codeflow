@@ -1,2 +1,3 @@
-// NOTE: Tasks 7 and 8 will add descriptor.js, merger.js, errors.js exports
+// NOTE: Task 8 will add merger.js, errors.js exports
 export * from './canonicalizer.js'
+export * from './descriptor.js'
