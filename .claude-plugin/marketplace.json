@@ -1,0 +1,7 @@
+{
+  "name": "codeflow",
+  "tagline": "Live-updating module dependency graphs in the browser",
+  "category": "dev-tools",
+  "tags": ["visualization", "typescript", "python", "codebase"],
+  "installCommand": "plugin marketplace add RTinkslinger/codeflow"
+}
