@@ -43,6 +43,8 @@ run('git add -f packages/renderer-mermaid/dist/ packages/preview/dist/')
 run('git add -f packages/cli/node_modules/ packages/core/node_modules/')
 run('git add -f packages/canonical/node_modules/ packages/preview/node_modules/')
 run('git add -f packages/extractor-depcruise/node_modules/ packages/extractor-treesitter-python/node_modules/')
+run('git add -f packages/extractor-scip-typescript/node_modules/ packages/extractor-scip-python/node_modules/')
+run('git add -f packages/renderer-mermaid/node_modules/ packages/test-utils/node_modules/')
 run('git add -f node_modules/')
 
 const version = (JSON.parse(fs.readFileSync('package.json', 'utf-8')) as { version?: string }).version
