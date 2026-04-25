@@ -1,7 +1,8 @@
 import { CodeflowMCP } from './mcp.js'
-import { createLogger } from '@codeflow/core'
+import { createLogger, LOG_DIR } from '@codeflow/core'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { execFileSync } from 'node:child_process'
 import path from 'node:path'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -12,6 +13,14 @@ const args = process.argv.slice(2)
 // Handle --version flag (required by smoke test and doctor)
 if (args[0] === '--version' || args[0] === '-v') {
   process.stdout.write(pkg.version + '\n')
+  process.exit(0)
+}
+
+// Handle logs tail subcommand
+if (args[0] === 'logs' && args[1] === 'tail') {
+  const today = new Date().toISOString().slice(0, 10)
+  const logFile = path.join(LOG_DIR, `server-${today}.log`)
+  execFileSync('tail', ['-f', '-n', '100', logFile], { stdio: [0, 1, 2] })
   process.exit(0)
 }
 

@@ -25,9 +25,10 @@ describe('mergeIRs', () => {
   })
 })
 
+let _relId = 0
 const mkIR = (rels: Array<{ from: string; to: string; kind: 'calls' | 'imports'; confidence: 'inferred' | 'verified' }>) => ({
   schemaVersion: '1' as const, meta: BASE_META, documents: [], symbols: [],
-  relationships: rels.map(r => ({ ...r, origin: 'extractor' as const })),
+  relationships: rels.map(r => ({ id: `rel:${++_relId}`, language: 'ts' as const, origin: 'extractor' as const, ...r })),
 })
 
 describe('computeDiff', () => {
