@@ -37,7 +37,7 @@ export const RelationshipSchema = z.object({
     file: z.string(),
     line: z.number().int(),
     col: z.number().int().optional(),
-  }).optional(),
+  }).strict().optional(),
   language: z.enum(['ts', 'py', 'go', 'swift']),
   confidence: z.enum(['verified', 'inferred']),
   evidence: z.string().optional(),
@@ -53,7 +53,7 @@ const DocumentSchema = z.object({
 export const IRSchema = z.object({
   schemaVersion: z.literal('1'),
   meta: z.object({
-    extractor: z.object({ name: z.string(), version: z.string(), invocation: z.string() }),
+    extractor: z.object({ name: z.string(), version: z.string(), invocation: z.string() }).strict(),
     root: z.string(),
     partial: z.boolean().optional(),
     errors: z.array(z.unknown()).optional(),
@@ -61,8 +61,8 @@ export const IRSchema = z.object({
       added: z.array(RelationshipSchema),
       removed: z.array(RelationshipSchema),
       upgraded: z.array(RelationshipSchema),
-    }).optional(),
-  }),
+    }).strict().optional(),
+  }).strict(),
   documents: z.array(DocumentSchema),
   symbols: z.array(SymbolSchema),
   relationships: z.array(RelationshipSchema),
