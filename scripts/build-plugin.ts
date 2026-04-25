@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
 // Release build: compile all packages, then commit dist/ + node_modules to release branch
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'

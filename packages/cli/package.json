@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/main.js",
+  "bin": { "codeflow": "./dist/main.js" },
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
+      "import": "./dist/main.js",
       "types": "./dist/index.d.ts"
     }
   },

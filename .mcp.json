@@ -1,8 +1,7 @@
 {
   "mcpServers": {
     "codeflow": {
-      "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/packages/cli/dist/main.js"],
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/codeflow-mcp",
       "description": "codeflow MCP server — provides start_preview, list_previews, stop_preview, get_ir, render_once tools"
     }
   }
