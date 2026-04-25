@@ -1,0 +1,27 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'pnpm' }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Commit built artifacts to release branch
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "github-actions"
+          git checkout -B release
+          git add -f packages/cli/dist/ packages/*/dist/ node_modules/
+          git commit -m "release: ${{ github.ref_name }}"
+          git push --force origin release
+      - uses: softprops/action-gh-release@v2
+        with:
+          body: "Install with: `/plugin marketplace add RTinkslinger/codeflow`"
