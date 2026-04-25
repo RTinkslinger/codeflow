@@ -55,7 +55,7 @@ it('PREVIEW_HTML verified_ready handler updates diagram, label, and dot', async 
     JSON, parseInt, Math, String, Promise,
   }
 
-  const scriptContent = PREVIEW_HTML.match(/<script>([\s\S]+?)<\/script>/)![1]
+  const scriptContent = PREVIEW_HTML.match(/<script>([\s\S]+?)<\/script>/)![1] as string
   vm.runInContext(scriptContent, vm.createContext(sandbox))
 
   expect(capturedOnMessage).toBeDefined()
