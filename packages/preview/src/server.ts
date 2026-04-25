@@ -31,7 +31,7 @@ function getOSPort(): Promise<number> {
   })
 }
 
-const PREVIEW_HTML = `<!DOCTYPE html>
+export const PREVIEW_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -65,6 +65,11 @@ const PREVIEW_HTML = `<!DOCTYPE html>
         document.getElementById('dot').className = 'error';
       } else if (msg.type === 'stale') {
         location.reload();
+      } else if (msg.type === 'verified_ready') {
+        document.getElementById('diagram').innerHTML = msg.mermaid;
+        document.getElementById('label').textContent = msg.badge ?? '● verified';
+        document.getElementById('dot').className = 'ready';
+        await mermaid.run({ nodes: [document.getElementById('diagram')] });
       }
     };
     ws.onopen = () => {

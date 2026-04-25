@@ -34,6 +34,9 @@ console.log('✓ All critical artifacts present')
 // 3. Switch to release branch and commit
 run('git checkout -B release')
 
+// Stage source files (version bump, plugin metadata, commands, config)
+run('git add package.json .claude-plugin/ commands/ .mcp.json')
+
 // Force-add built artifacts (normally gitignored on main)
 run('git add -f packages/cli/dist/ packages/core/dist/ packages/canonical/dist/')
 run('git add -f packages/extractor-depcruise/dist/ packages/extractor-treesitter-python/dist/')

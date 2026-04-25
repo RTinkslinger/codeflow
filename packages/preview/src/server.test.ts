@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { allocatePort, PreviewServer } from './server.js'
+import { allocatePort, PreviewServer, PREVIEW_HTML } from './server.js'
 import http from 'node:http'
+import vm from 'node:vm'
 
 describe('allocatePort', () => {
   it('returns a port in the configured range', async () => {
@@ -15,6 +16,57 @@ describe('allocatePort', () => {
     expect(typeof port).toBe('number')
     expect(port).toBeGreaterThan(0)
   })
+})
+
+it('PREVIEW_HTML verified_ready handler updates diagram, label, and dot', async () => {
+  // Extracts the inline <script> block and runs it in a vm context with stubbed browser globals.
+  // Stronger than substring-presence: asserts observable DOM mutations when verified_ready fires
+  // through ws.onmessage — a comment or dead-code occurrence would not change element state.
+  // test-discipline: lifecycle-gap-deferred — first-vs-subsequent verified_ready animation
+  // distinction (Option E spec) is not yet implemented; this asserts baseline handler only.
+  const dot = { className: '', textContent: '', innerHTML: '' }
+  const label = { className: '', textContent: '', innerHTML: '' }
+  const diagram = { className: '', textContent: '', innerHTML: '' }
+  let capturedOnMessage: ((e: { data: string }) => Promise<void>) | undefined
+  const mermaidRunCalls: unknown[] = []
+
+  const sandbox = {
+    document: {
+      getElementById: (id: string) =>
+        ({ dot, label, diagram } as Record<string, typeof dot>)[id],
+    },
+    WebSocket: class {
+      constructor(_url: string) {}
+      // eslint-disable-next-line accessor-pairs
+      set onmessage(fn: (e: { data: string }) => Promise<void>) { capturedOnMessage = fn }
+      // eslint-disable-next-line accessor-pairs
+      set onopen(_fn: () => void) {}
+      // eslint-disable-next-line accessor-pairs
+      set onclose(_fn: () => void) {}
+    },
+    mermaid: {
+      initialize: () => {},
+      run: async (opts: unknown) => { mermaidRunCalls.push(opts) },
+    },
+    sessionStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    location: { host: 'localhost:7800', reload: () => {} },
+    // Explicit built-ins required: async fns in the vm context use the context's Promise.
+    // Providing the outer Promise ensures cross-context await works correctly.
+    JSON, parseInt, Math, String, Promise,
+  }
+
+  const scriptContent = PREVIEW_HTML.match(/<script>([\s\S]+?)<\/script>/)![1]
+  vm.runInContext(scriptContent, vm.createContext(sandbox))
+
+  expect(capturedOnMessage).toBeDefined()
+  await capturedOnMessage!({
+    data: JSON.stringify({ type: 'verified_ready', mermaid: 'graph LR\n  A-->B', badge: '● verified' }),
+  })
+
+  expect(diagram.innerHTML).toBe('graph LR\n  A-->B')
+  expect(label.textContent).toBe('● verified')
+  expect(dot.className).toBe('ready')
+  expect(mermaidRunCalls).toHaveLength(1)
 })
 
 describe('PreviewServer', () => {

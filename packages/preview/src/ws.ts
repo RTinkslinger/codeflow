@@ -9,15 +9,21 @@ export interface BroadcastMessage {
 export class WSBroadcaster {
   private wss: WebSocketServer
   private latestPerClient = new WeakMap<WebSocket, NodeJS.Timeout>()
+  private lastMessage: BroadcastMessage | null = null
 
   constructor(server: http.Server) {
     this.wss = new WebSocketServer({ server, path: '/ws' })
     this.wss.on('connection', (ws) => {
       ws.on('error', () => ws.terminate())
+      // Replay last state to late-connecting clients (fixes race: extraction finishes before browser opens)
+      if (this.lastMessage && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(this.lastMessage))
+      }
     })
   }
 
   broadcast(msg: BroadcastMessage): void {
+    this.lastMessage = msg
     const payload = JSON.stringify(msg)
     for (const client of this.wss.clients) {
       if (client.readyState !== WebSocket.OPEN) continue

@@ -28,6 +28,27 @@ describe('WSBroadcaster', () => {
     expect((received as { type: string }).type).toBe('update')
   })
 
+  it('replays last broadcast to a client that connects after the broadcast', async () => {
+    previewServer = new PreviewServer()
+    const { port } = await previewServer.start()
+    broadcaster = new WSBroadcaster(previewServer.server!)
+
+    // Broadcast BEFORE any client connects — simulates extraction completing before browser opens
+    broadcaster.broadcast({ type: 'update', mermaid: 'graph LR\n  A --> B', badge: '● fast view' })
+
+    // Let the broadcast attempt run (no clients connected, so nothing sent yet)
+    await new Promise(r => setTimeout(r, 50))
+
+    // Late-connecting client arrives after extraction already finished
+    const received = await new Promise<unknown>((resolve) => {
+      const client = new WebSocket(`ws://127.0.0.1:${port}/ws`)
+      client.once('message', (data) => resolve(JSON.parse(data.toString())))
+      setTimeout(() => resolve(null), 1000)
+    })
+
+    expect(received).toEqual({ type: 'update', mermaid: 'graph LR\n  A --> B', badge: '● fast view' })
+  })
+
   it('uses latest-wins buffer — rapid sends deliver only the last', async () => {
     previewServer = new PreviewServer()
     const { port } = await previewServer.start()
