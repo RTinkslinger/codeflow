@@ -11,7 +11,10 @@ const ConfigSchema = z.object({
   requireManualApply: z.boolean().default(false),
   portRangeStart: z.number().int().default(7800),
   portRangeEnd: z.number().int().default(7900),
-}).strict()
+}).strict().refine(c => c.portRangeStart < c.portRangeEnd, {
+  message: 'portRangeStart must be less than portRangeEnd',
+  path: ['portRangeStart'],
+})
 
 export type CodeflowConfig = z.infer<typeof ConfigSchema>
 
@@ -24,7 +27,12 @@ export function loadConfig(searchFrom: string): CodeflowConfig {
   ]
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {
-      const raw = JSON.parse(fs.readFileSync(candidate, 'utf-8'))
+      let raw: unknown
+      try {
+        raw = JSON.parse(fs.readFileSync(candidate, 'utf-8'))
+      } catch (e) {
+        throw new Error(`Failed to parse config file ${candidate}: ${e instanceof Error ? e.message : String(e)}`)
+      }
       return ConfigSchema.parse({ ...defaultConfig, ...raw })
     }
   }
