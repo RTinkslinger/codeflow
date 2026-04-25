@@ -60,9 +60,31 @@ importers:
         specifier: workspace:*
         version: link:../test-utils
 
-  packages/extractor-scip-python: {}
+  packages/extractor-scip-python:
+    dependencies:
+      '@codeflow/canonical':
+        specifier: workspace:*
+        version: link:../canonical
+      '@codeflow/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@codeflow/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
 
-  packages/extractor-scip-typescript: {}
+  packages/extractor-scip-typescript:
+    dependencies:
+      '@codeflow/canonical':
+        specifier: workspace:*
+        version: link:../canonical
+      '@codeflow/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@codeflow/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
 
   packages/extractor-treesitter-python:
     dependencies:
