@@ -36,8 +36,6 @@ export class CodeflowMCP {
   private previews = new Map<string, PreviewRecord>()
   private fastExtractor = new DepcruiseExtractor()
   private pyExtractor = new TreeSitterPythonExtractor()
-  private scipTsExtractor = new ScipTypescriptExtractor()
-  private scipPyExtractor = new ScipPythonExtractor()
 
   async startPreview(opts: { path: string }): Promise<{ url: string; previewId: string; status: PreviewStatus }> {
     // Return existing preview for same path (v1 share-per-path)
@@ -176,7 +174,7 @@ export class CodeflowMCP {
       if (Date.now() - record.lastClientSeen > IDLE_TIMEOUT_MS && Date.now() - record.lastGetIrSeen > IDLE_TIMEOUT_MS) {
         this.stopPreview({ previewId: record.previewId })
       }
-    }, IDLE_TIMEOUT_MS)
+    }, IDLE_TIMEOUT_MS).unref()
   }
 
   async shutdown(): Promise<void> {

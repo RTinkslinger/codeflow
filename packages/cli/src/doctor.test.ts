@@ -27,5 +27,6 @@ describe('saveDiagBundle', () => {
     const bundleDir = path.join(os.homedir(), '.codeflow', 'diagnostics', diagId)
     expect(fs.existsSync(path.join(bundleDir, 'error.json'))).toBe(true)
     expect(fs.existsSync(path.join(bundleDir, 'context.json'))).toBe(true)
+    expect(fs.existsSync(path.join(bundleDir, 'env.json'))).toBe(true)
   })
 })

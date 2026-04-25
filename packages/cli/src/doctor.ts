@@ -37,8 +37,10 @@ export async function runDoctor(): Promise<DoctorReport> {
 function listRecentDiags(): string[] {
   if (!fs.existsSync(DIAG_DIR)) return []
   return fs.readdirSync(DIAG_DIR)
+    .map(d => ({ d, mtime: fs.statSync(path.join(DIAG_DIR, d)).mtimeMs }))
+    .sort((a, b) => a.mtime - b.mtime)
     .slice(-5)
-    .map(d => path.join(DIAG_DIR, d, 'error.json'))
+    .map(({ d }) => path.join(DIAG_DIR, d, 'error.json'))
     .filter(p => fs.existsSync(p))
     .map(p => { try { return JSON.parse(fs.readFileSync(p, 'utf-8')).code } catch { return '?' } })
 }
