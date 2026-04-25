@@ -18,6 +18,7 @@
       "author": {
         "name": "Aakash Kumar"
       },
+      "repository": "https://github.com/RTinkslinger/codeflow",
       "license": "MIT",
       "keywords": ["codeflow", "flowchart", "dependency-graph", "typescript", "python", "visualization"]
     }

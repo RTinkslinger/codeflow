@@ -22,6 +22,9 @@ dist/
 *.log
 logs/
 
+# Session artifacts
+TRACES.md
+
 # Test
 coverage/
 .nyc_output/

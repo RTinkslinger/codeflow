@@ -1,5 +1,6 @@
 ---
 description: Open a live-updating module dependency graph in your browser
+argument-hint: "[path] [--verified]"
 allowed-tools: mcp__plugin_codeflow_codeflow__start_preview, mcp__plugin_codeflow_codeflow__get_ir, mcp__plugin_codeflow_codeflow__list_previews, mcp__plugin_codeflow_codeflow__stop_preview, mcp__plugin_codeflow_codeflow__render_once
 ---
 
