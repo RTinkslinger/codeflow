@@ -14,5 +14,13 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "@codeflow/canonical": "workspace:*",
+    "@codeflow/core": "workspace:*",
+    "dependency-cruiser": "^17.3.10"
+  },
+  "devDependencies": {
+    "@codeflow/test-utils": "workspace:*"
   }
 }
