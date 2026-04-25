@@ -103,7 +103,7 @@ export class CodeflowMCP {
                 irs.push(tsResult.value.ir);
             if (pyResult.status === 'fulfilled')
                 irs.push(pyResult.value.ir);
-            if (irs.length > 0) {
+            if (irs.some(ir => ir.symbols.length > 0)) {
                 const merged = mergeIRs(irs);
                 const { symbols, relationships } = canonicalMerge(merged.symbols, record.path, merged.relationships);
                 const canonical = { ...merged, symbols, relationships };

@@ -36,7 +36,7 @@ export class DepcruiseExtractor {
         let stdout;
         let stderrTail;
         try {
-            const result = await execFileAsync(DEPCRUISE_BIN, ['--no-config', '--output-type', 'json', opts.path], { cwd: root, timeout: opts.timeoutMs ?? 90_000, maxBuffer: 50 * 1024 * 1024 });
+            const result = await execFileAsync(DEPCRUISE_BIN, ['--no-config', '--exclude', '^(node_modules|\\.git)', '--output-type', 'json', root], { cwd: root, timeout: opts.timeoutMs ?? 90_000, maxBuffer: 50 * 1024 * 1024 });
             stdout = result.stdout;
             if (result.stderr)
                 stderrTail = result.stderr.slice(-2000);
@@ -53,6 +53,8 @@ export class DepcruiseExtractor {
         const symbols = [];
         const relationships = [];
         for (const mod of parsed.modules ?? []) {
+            if (mod.coreModule || mod.couldNotResolve)
+                continue;
             const absPath = path.isAbsolute(mod.source)
                 ? mod.source
                 : path.join(root, mod.source);

@@ -22,6 +22,7 @@ export async function runDoctor() {
             depcruise: checkTool('npx depcruise'),
             'scip-typescript': checkTool('scip-typescript'),
             'scip-python': checkTool('scip-python'),
+            'scip': checkTool('scip'),
         },
         recentErrors: listRecentDiags(),
     };
