@@ -4,7 +4,7 @@ interface PortRange { start: number; end: number }
 
 export async function allocatePort(range: PortRange): Promise<number> {
   for (let port = range.start; port <= range.end; port++) {
-    // port 0 is an OS sentinel (assigns random port) — skip in range; getOSPort() handles it
+    // port 0 is an OS sentinel (assigns random port) — skip in range; tryBind(0) handles it
     if (port > 0 && await isPortFree(port)) return port
   }
   return getOSPort()
@@ -67,11 +67,15 @@ const PREVIEW_HTML = `<!DOCTYPE html>
         location.reload();
       }
     };
-    ws.onopen = () => { document.getElementById('label').textContent = 'extracting...'; };
+    ws.onopen = () => {
+      sessionStorage.removeItem('cf_delay');
+      document.getElementById('label').textContent = 'extracting...';
+    };
     ws.onclose = () => {
-      let delay = 1000;
-      function reconnect() { setTimeout(() => { location.reload(); }, delay); delay = Math.min(delay * 2, 30000); }
-      reconnect();
+      // Exponential backoff persisted via sessionStorage so it survives location.reload()
+      const delay = Math.min(parseInt(sessionStorage.getItem('cf_delay') || '1000'), 30000);
+      sessionStorage.setItem('cf_delay', String(Math.min(delay * 2, 30000)));
+      setTimeout(() => location.reload(), delay);
     };
   </script>
 </body>
@@ -82,25 +86,44 @@ export class PreviewServer {
   private _port: number = 0
 
   async start(portRange: PortRange = { start: 7800, end: 7900 }): Promise<{ port: number; url: string }> {
-    this._port = await allocatePort(portRange)
-    this.httpServer = http.createServer((_req, res) => {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
-      res.end(PREVIEW_HTML)
-    })
-    await new Promise<void>((resolve, reject) => {
-      this.httpServer!.listen(this._port, '127.0.0.1', resolve)
-      this.httpServer!.on('error', reject)
-    })
+    const candidate = await allocatePort(portRange)
+    // tryBind handles the TOCTOU race: if port is stolen between isPortFree and listen,
+    // the EADDRINUSE error triggers a fallback to OS-assigned port (port 0).
+    try {
+      this._port = await this.tryBind(candidate)
+    } catch {
+      this._port = await this.tryBind(0)
+    }
     return { port: this._port, url: `http://127.0.0.1:${this._port}` }
+  }
+
+  private tryBind(port: number): Promise<number> {
+    return new Promise((resolve, reject) => {
+      const srv = http.createServer((_req, res) => {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+        res.end(PREVIEW_HTML)
+      })
+      // Attach error listener before listen() to avoid ordering hazard
+      srv.once('error', (err) => {
+        srv.close()
+        reject(err)
+      })
+      srv.listen(port, '127.0.0.1', () => {
+        const addr = srv.address()
+        this.httpServer = srv
+        // For port 0, resolve to the OS-assigned port
+        resolve(addr && typeof addr === 'object' ? addr.port : port)
+      })
+    })
   }
 
   get server(): http.Server | null { return this.httpServer }
   get port(): number { return this._port }
 
   async stop(): Promise<void> {
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       if (!this.httpServer) { resolve(); return }
-      this.httpServer.close(() => resolve())
+      this.httpServer.close((err) => { if (err) reject(err); else resolve() })
     })
     this.httpServer = null
   }
