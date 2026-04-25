@@ -1,3 +1,6 @@
+---
+brain_federation: enabled
+---
 # codeflow
 
 **What this is:** A Claude Code plugin that renders live-updating flowcharts and dependency graphs of polyglot codebases in a browser, with deterministic extraction (must-be-verifiable accuracy bar) and an SCIP-inspired IR.

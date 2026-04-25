@@ -57,7 +57,7 @@ if (args[0] === 'render_once' && args[1]) {
   process.stdin.on('end', async () => { await mcp.shutdown(); process.exit(0) })
 }
 
-async function handleRequest(mcp: CodeflowMCP, line: string, logger: ReturnType<typeof createLogger>): Promise<void> {
+async function handleRequest(mcp: CodeflowMCP, line: string, logger: Awaited<ReturnType<typeof createLogger>>): Promise<void> {
   let req: { id: unknown; method: string; params?: Record<string, unknown> }
   try { req = JSON.parse(line) }
   catch {
