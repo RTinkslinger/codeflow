@@ -1,6 +1,7 @@
 import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import type { IR, Language } from '@codeflow/core'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FIXTURES_ROOT = path.resolve(__dirname, '../../../tests/fixtures')
@@ -57,12 +58,12 @@ function sortKeys(obj: unknown): unknown {
   return obj
 }
 
-type MockOptions = { symbolCount?: number; language?: string }
+type MockOptions = { symbolCount?: number; language?: Language }
 
-export function mockExtractorOutput(opts: MockOptions = {}) {
+export function mockExtractorOutput(opts: MockOptions = {}): IR {
   const { symbolCount = 1, language = 'ts' } = opts
   return {
-    schemaVersion: '1' as const,
+    schemaVersion: '1',
     meta: {
       extractor: { name: 'mock', version: '0.0.0', invocation: 'mock' },
       root: '/mock',

@@ -33,7 +33,7 @@ export function loadConfig(searchFrom: string): CodeflowConfig {
       } catch (e) {
         throw new Error(`Failed to parse config file ${candidate}: ${e instanceof Error ? e.message : String(e)}`)
       }
-      return ConfigSchema.parse({ ...defaultConfig, ...raw })
+      return ConfigSchema.parse({ ...defaultConfig, ...(raw as Record<string, unknown>) })
     }
   }
   return defaultConfig

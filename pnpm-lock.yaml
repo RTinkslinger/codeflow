@@ -33,7 +33,39 @@ importers:
         specifier: ^3.23.2
         version: 3.23.2
 
-  packages/cli: {}
+  packages/cli:
+    dependencies:
+      '@codeflow/canonical':
+        specifier: workspace:*
+        version: link:../canonical
+      '@codeflow/core':
+        specifier: workspace:*
+        version: link:../core
+      '@codeflow/extractor-depcruise':
+        specifier: workspace:*
+        version: link:../extractor-depcruise
+      '@codeflow/extractor-scip-python':
+        specifier: workspace:*
+        version: link:../extractor-scip-python
+      '@codeflow/extractor-scip-typescript':
+        specifier: workspace:*
+        version: link:../extractor-scip-typescript
+      '@codeflow/extractor-treesitter-python':
+        specifier: workspace:*
+        version: link:../extractor-treesitter-python
+      '@codeflow/preview':
+        specifier: workspace:*
+        version: link:../preview
+      '@codeflow/renderer-mermaid':
+        specifier: workspace:*
+        version: link:../renderer-mermaid
+      graphology:
+        specifier: ^0.26.0
+        version: 0.26.0(graphology-types@0.24.8)
+    devDependencies:
+      '@codeflow/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
 
   packages/core:
     dependencies:
@@ -134,7 +166,11 @@ importers:
         specifier: workspace:*
         version: link:../test-utils
 
-  packages/test-utils: {}
+  packages/test-utils:
+    dependencies:
+      '@codeflow/core':
+        specifier: workspace:*
+        version: link:../core
 
 packages:
 
@@ -567,6 +603,10 @@ packages:
   estree-walker@3.0.3:
     resolution: {integrity: sha512-7RUKfXgSMMkzt6ZuXmqapOurLGPPfgj6l9uRZ7lRGolvk0y2yocc35LdcxKC5PQZdn2DMqioAQ2NoWcrTKmm6g==}
 
+  events@3.3.0:
+    resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
+    engines: {node: '>=0.8.x'}
+
   execa@8.0.1:
     resolution: {integrity: sha512-VyhnebXciFV2DESc+p6B+y0LjSm0krU4OgJN44qFAhBY0TJ+1V61tYD2+wHusZ6F9n5K+vl8k0sTy7PEfV4qpg==}
     engines: {node: '>=16.17'}
@@ -601,6 +641,14 @@ packages:
 
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
+
+  graphology-types@0.24.8:
+    resolution: {integrity: sha512-hDRKYXa8TsoZHjgEaysSRyPdT6uB78Ci8WnjgbStlQysz7xR52PInxNsmnB7IBOM1BhikxkNyCVEFgmPKnpx3Q==}
+
+  graphology@0.26.0:
+    resolution: {integrity: sha512-8SSImzgUUYC89Z042s+0r/vMibY7GX/Emz4LDO5e7jYXhuoWfHISPFJYjpRLUSJGq6UQ6xlenvX1p/hJdfXuXg==}
+    peerDependencies:
+      graphology-types: '>=0.24.0'
 
   has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
@@ -1360,6 +1408,8 @@ snapshots:
     dependencies:
       '@types/estree': 1.0.8
 
+  events@3.3.0: {}
+
   execa@8.0.1:
     dependencies:
       cross-spawn: 7.0.6
@@ -1393,6 +1443,13 @@ snapshots:
       ini: 4.1.1
 
   graceful-fs@4.2.11: {}
+
+  graphology-types@0.24.8: {}
+
+  graphology@0.26.0(graphology-types@0.24.8):
+    dependencies:
+      events: 3.3.0
+      graphology-types: 0.24.8
 
   has-flag@4.0.0: {}
 

@@ -1,4 +1,3 @@
-// @ts-expect-error — no type declarations for tree-sitter-python
 import Python from 'tree-sitter-python'
 import TreeSitter from 'tree-sitter'
 import path from 'node:path'
