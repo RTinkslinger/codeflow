@@ -56,12 +56,26 @@ export class TreeSitterPythonExtractor implements Extractor {
       // (e.g. two classes each defining __init__ would collide if we recursed into class bodies)
       for (const child of tree.rootNode.children) {
         // Import relationships
-        if (child.type === 'import_statement' || child.type === 'import_from_statement') {
+        if (child.type === 'import_statement') {
+          // `import os, sys` — iterate all named module references
+          for (const c of child.namedChildren) {
+            let moduleName: string | null = null
+            if (c.type === 'dotted_name') {
+              moduleName = c.text.replace(/\./g, '/')
+            } else if (c.type === 'aliased_import') {
+              const nameNode = c.childForFieldName('name')
+              if (nameNode) moduleName = nameNode.text.replace(/\./g, '/')
+            }
+            if (moduleName) {
+              const toId = buildDescriptor({ scheme: 'tspy', manager: 'python', pkg: moduleName, descriptor: path.basename(moduleName) })
+              relationships.push({ id: `${fileId}::${toId}::imports`, from: fileId, to: toId, kind: 'imports', language: 'py', confidence: 'inferred' })
+            }
+          }
+        } else if (child.type === 'import_from_statement') {
           const moduleName = extractModuleName(child)
           if (moduleName) {
             const toId = buildDescriptor({ scheme: 'tspy', manager: 'python', pkg: moduleName, descriptor: path.basename(moduleName) })
-            const relId = `${fileId}::${toId}::imports`
-            relationships.push({ id: relId, from: fileId, to: toId, kind: 'imports', language: 'py', confidence: 'inferred' })
+            relationships.push({ id: `${fileId}::${toId}::imports`, from: fileId, to: toId, kind: 'imports', language: 'py', confidence: 'inferred' })
           }
         }
 
@@ -71,7 +85,8 @@ export class TreeSitterPythonExtractor implements Extractor {
           if (nameNode) {
             const symName = nameNode.text
             const symKind = child.type === 'class_definition' ? 'class' as const : 'function' as const
-            const symId = buildDescriptor({ scheme: 'tspy', manager: 'python', pkg: relPath, descriptor: symName })
+            const lineNum = child.startPosition.row + 1
+            const symId = buildDescriptor({ scheme: 'tspy', manager: 'python', pkg: relPath, descriptor: `${symName}:L${lineNum}` })
             symbols.push({
               id: symId,
               kind: symKind,
