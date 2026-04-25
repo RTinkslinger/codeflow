@@ -16,5 +16,9 @@ jobs:
       - name: CLI version check
         run: node packages/cli/dist/main.js --version
       - name: render_once smoke test
-        run: timeout 30 node packages/cli/dist/main.js render_once tests/fixtures/pure-ts/
+        run: |
+          OUT=$(timeout 30 node packages/cli/dist/main.js render_once tests/fixtures/pure-ts/ 2>/dev/null)
+          MMD_PATH=$(echo "$OUT" | node -e "process.stdin.setEncoding('utf-8');let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d).filePath))")
+          grep -q '^graph' "$MMD_PATH" || (echo "Mermaid validation failed: $MMD_PATH" && exit 1)
+          echo "render_once OK: $MMD_PATH"
         timeout-minutes: 1
