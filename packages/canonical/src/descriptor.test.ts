@@ -18,6 +18,12 @@ describe('buildDescriptor', () => {
     const id = buildDescriptor(parts)
     expect(parseDescriptor(id)).toEqual(parts)
   })
+
+  it('round-trips when descriptor contains embedded colons (e.g. method signature)', () => {
+    const parts = { scheme: 'scip-py', manager: 'python', pkg: 'src/auth', descriptor: 'AuthService#login(string:int)' }
+    const id = buildDescriptor(parts)
+    expect(parseDescriptor(id)).toEqual(parts)
+  })
 })
 
 describe('parseDescriptor', () => {
