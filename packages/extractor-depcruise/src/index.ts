@@ -66,7 +66,7 @@ export class DepcruiseExtractor implements Extractor {
       if (result.stderr) stderrTail = result.stderr.slice(-2000)
     } catch (err: unknown) {
       const e = err as { stdout?: string; stderr?: string; message: string }
-      stdout = e.stdout ?? '{}'
+      stdout = e.stdout || '{}'
       stderrTail = e.stderr?.slice(-2000) ?? e.message
     }
 
