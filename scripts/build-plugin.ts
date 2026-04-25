@@ -40,7 +40,8 @@ run('git add -f packages/extractor-scip-typescript/dist/ packages/extractor-scip
 run('git add -f packages/renderer-mermaid/dist/ packages/preview/dist/')
 run('git add -f node_modules/')
 
-const version = JSON.parse(fs.readFileSync('package.json', 'utf-8')).version as string
+const version = (JSON.parse(fs.readFileSync('package.json', 'utf-8')) as { version?: string }).version
+if (!version) throw new Error('package.json missing version field')
 run(`git commit -m "release: v${version}"`)
 
 console.log(`\n✓ Release branch ready. Push with:\n  git push --force origin release`)
