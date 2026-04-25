@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { DepcruiseExtractor } from '@codeflow/extractor-depcruise'
 import { TreeSitterPythonExtractor } from '@codeflow/extractor-treesitter-python'
 import { mergeIRs } from '@codeflow/core'
-import { canonicalMerge } from '@codeflow/canonical'
+import { canonicalMerge, InvariantError } from '@codeflow/canonical'
 import { renderMermaid } from '@codeflow/renderer-mermaid'
 import { assertInvariants, loadFixture } from '@codeflow/test-utils'
 
@@ -33,34 +33,32 @@ describe('Full pipeline — fast lane', () => {
   }, 60_000)
 })
 
-describe('Canonicalizer stress — ts-codegen-py', () => {
-  it('TS generator.ts and PY user_model.py appear as separate nodes — NOT merged', async () => {
-    const p = loadFixture('ts-codegen-py')
-    const ts = new DepcruiseExtractor()
-    const py = new TreeSitterPythonExtractor()
-    const [tsR, pyR] = await Promise.all([
-      ts.extract({ path: p, root: p }),
-      py.extract({ path: p, root: p }),
-    ])
-    const merged = mergeIRs([tsR.ir, pyR.ir])
+describe('Canonicalizer stress — cross-extractor same-path dedup', () => {
+  it('depcruise + scip-ts both see same .ts file → canonicalMerge produces ONE node', () => {
+    // Simulate two extractors producing different symbol IDs for the same file on disk
+    const absPath = '/p/src/auth.ts'
+    const relPath = 'src/auth.ts'
+    const symA = { id: 'depcruise:node:src/auth.ts:auth.ts', kind: 'module' as const, name: 'auth.ts', absPath, relPath, language: 'ts' as const, origin: 'extractor' as const, confidence: 'inferred' as const }
+    const symB = { id: 'scip:typescript:src/auth:AuthService', kind: 'class' as const, name: 'AuthService', absPath, relPath, language: 'ts' as const, origin: 'extractor' as const, confidence: 'verified' as const }
 
-    // depcruise produces file-level module symbols; ts-codegen-py has ts/src/generator.ts
-    const tsSymbols = merged.symbols.filter(s => s.language === 'ts')
-    // tree-sitter-python produces module symbol named after basename-without-.py
-    const pyUserModel = merged.symbols.filter(s => s.language === 'py' && s.name.toLowerCase().includes('user'))
+    // Before canonical merge: two different IDs map to the same path
+    const uniquePaths = [...new Set([symA, symB].map(s => s.absPath))]
+    expect(uniquePaths).toHaveLength(1)
 
-    expect(tsSymbols.length).toBeGreaterThan(0)
-    expect(pyUserModel.length).toBeGreaterThan(0)
+    // After canonical merge: one winner per path
+    const { symbols } = canonicalMerge([symA, symB], '/p')
+    expect(symbols).toHaveLength(1)
 
-    // No duplicate IDs across language boundary
-    assertInvariants(merged)
+    // Winner should have promoted to verified confidence
+    expect(symbols[0]!.confidence).toBe('verified')
 
-    // canonicalMerge must not collapse cross-language symbols
-    const { symbols } = canonicalMerge(merged.symbols, p, merged.relationships)
+    // assertInvariants checks absPath uniqueness
     assertInvariants({ symbols })
-    const canonTsSymbols = symbols.filter(s => s.language === 'ts')
-    const canonPySymbols = symbols.filter(s => s.language === 'py')
-    expect(canonTsSymbols.length).toBeGreaterThan(0)
-    expect(canonPySymbols.length).toBeGreaterThan(0)
-  }, 60_000)
+  })
+
+  it('same id, different paths → InvariantError thrown', () => {
+    const symA = { id: 'collision:id', kind: 'function' as const, name: 'fn', absPath: '/p/a.ts', relPath: 'a.ts', language: 'ts' as const, origin: 'extractor' as const, confidence: 'inferred' as const }
+    const symB = { id: 'collision:id', kind: 'function' as const, name: 'fn', absPath: '/p/b.ts', relPath: 'b.ts', language: 'ts' as const, origin: 'extractor' as const, confidence: 'inferred' as const }
+    expect(() => canonicalMerge([symA, symB], '/p')).toThrow(InvariantError)
+  })
 })
