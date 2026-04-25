@@ -8,7 +8,7 @@ import { PreviewServer, WSBroadcaster, FileWatcher } from '@codeflow/preview'
 import { mergeIRs, createError, computeDiff } from '@codeflow/core'
 import { canonicalMerge } from '@codeflow/canonical'
 import { LaneStateMachine, derivePreviewStatus } from './state.js'
-import type { LaneState, PreviewStatus } from './state.js'
+import type { PreviewStatus } from './state.js'
 import type { IR } from '@codeflow/core'
 
 const PREVIEW_CAP = 8
@@ -148,6 +148,7 @@ export class CodeflowMCP {
       }
     } catch (err) {
       record.verifiedLane.onFail()
+      record.broadcaster.broadcast({ type: 'update', mermaid: record.fastIR ? renderMermaid(record.fastIR) : 'graph LR', badge: '● fast view (verified failed)' })
     }
     this.resetIdleTimer(record)
   }
@@ -226,5 +227,3 @@ export class CodeflowMCP {
   }
 }
 
-// Keep LaneState in scope for future verified-lane wiring
-type _LaneState = LaneState
