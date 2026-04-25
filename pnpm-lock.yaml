@@ -107,7 +107,15 @@ importers:
 
   packages/preview: {}
 
-  packages/renderer-mermaid: {}
+  packages/renderer-mermaid:
+    dependencies:
+      '@codeflow/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@codeflow/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
 
   packages/test-utils: {}
 
