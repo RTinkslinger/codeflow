@@ -57,6 +57,53 @@ if (args[0] === 'render_once' && args[1]) {
   process.stdin.on('end', async () => { await mcp.shutdown(); process.exit(0) })
 }
 
+const MCP_TOOLS = [
+  {
+    name: 'start_preview',
+    description: 'Start a live browser preview of the module dependency graph for a directory.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'Absolute path to the directory to analyze' },
+        verified: { type: 'boolean', description: 'Use type-resolved extractors (slower, more accurate)' },
+      },
+      required: ['path'],
+    },
+  },
+  {
+    name: 'list_previews',
+    description: 'List all active codeflow previews.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'stop_preview',
+    description: 'Stop an active codeflow preview.',
+    inputSchema: {
+      type: 'object',
+      properties: { previewId: { type: 'string', description: 'Preview ID to stop' } },
+      required: ['previewId'],
+    },
+  },
+  {
+    name: 'get_ir',
+    description: 'Get the current IR (intermediate representation) for a preview.',
+    inputSchema: {
+      type: 'object',
+      properties: { previewId: { type: 'string', description: 'Preview ID' } },
+      required: ['previewId'],
+    },
+  },
+  {
+    name: 'render_once',
+    description: 'Render a one-shot Mermaid diagram for a directory without starting a live preview.',
+    inputSchema: {
+      type: 'object',
+      properties: { path: { type: 'string', description: 'Absolute path to the directory to analyze' } },
+      required: ['path'],
+    },
+  },
+]
+
 async function handleRequest(mcp: CodeflowMCP, line: string, logger: Awaited<ReturnType<typeof createLogger>>): Promise<void> {
   let req: { id: unknown; method: string; params?: Record<string, unknown> }
   try { req = JSON.parse(line) }
@@ -64,6 +111,54 @@ async function handleRequest(mcp: CodeflowMCP, line: string, logger: Awaited<Ret
     process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }) + '\n')
     return
   }
+
+  // MCP protocol methods
+  if (req.method === 'initialize') {
+    process.stdout.write(JSON.stringify({
+      jsonrpc: '2.0', id: req.id,
+      result: {
+        protocolVersion: '2024-11-05',
+        capabilities: { tools: {} },
+        serverInfo: { name: 'codeflow', version: pkg.version },
+      },
+    }) + '\n')
+    return
+  }
+
+  if (req.method === 'notifications/initialized') return  // no response for notifications
+
+  if (req.method === 'tools/list') {
+    process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: req.id, result: { tools: MCP_TOOLS } }) + '\n')
+    return
+  }
+
+  if (req.method === 'tools/call') {
+    const { name, arguments: toolArgs } = req.params as { name: string; arguments: Record<string, unknown> }
+    try {
+      let result: unknown
+      switch (name) {
+        case 'start_preview': result = await mcp.startPreview(toolArgs as { path: string; verified?: boolean }); break
+        case 'list_previews': result = await mcp.listPreviews(); break
+        case 'stop_preview': result = await mcp.stopPreview(toolArgs as { previewId: string }); break
+        case 'get_ir': result = await mcp.getIR(toolArgs as { previewId: string }); break
+        case 'render_once': result = await mcp.renderOnce(toolArgs as { path: string }); break
+        default: {
+          process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: req.id, error: { code: -32601, message: `Unknown tool: ${name}` } }) + '\n')
+          return
+        }
+      }
+      process.stdout.write(JSON.stringify({
+        jsonrpc: '2.0', id: req.id,
+        result: { content: [{ type: 'text', text: JSON.stringify(result) }] },
+      }) + '\n')
+    } catch (err) {
+      logger.error({ err }, 'tools/call error')
+      process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: req.id, error: { code: -32603, message: String(err) } }) + '\n')
+    }
+    return
+  }
+
+  // Legacy custom JSON-RPC methods (for wire tests and render_once subprocess)
   try {
     let result: unknown
     switch (req.method) {
