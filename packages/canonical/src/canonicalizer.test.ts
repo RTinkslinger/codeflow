@@ -33,4 +33,8 @@ describe('posixRelative', () => {
   it('throws when absPath is not under root', () => {
     expect(() => posixRelative('/project', '/other/file.ts')).toThrow()
   })
+
+  it('returns empty string when absPath equals root', () => {
+    expect(posixRelative('/tmp', '/tmp')).toBe('')
+  })
 })
