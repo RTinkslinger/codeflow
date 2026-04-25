@@ -14,5 +14,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "@codeflow/core": "workspace:*",
+    "fast-check": "^3.23.2"
   }
 }
