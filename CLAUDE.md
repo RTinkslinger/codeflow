@@ -7,9 +7,10 @@ brain_federation: enabled
 
 **Develop on `main`. `pnpm build:plugin` produces the `release` branch artifact from main's source. Main is always the canonical source.**
 
-- All source changes go to `main` first
+- All source changes go to `main` first — commit and push main before running `pnpm build:plugin`
 - `release` branch is deployment-only (compiled dist + node_modules for the CC installer) — never develop directly on it
-- Every `pnpm build:plugin` run must be preceded by source changes committed to `main`
+- `pnpm build:plugin` auto-tags the release commit as `vX.Y.Z` — push tags with `git push --force origin vX.Y.Z`
+- Use `git checkout vX.Y.Z` to inspect any release, same as UPP
 
 **What this is:** A Claude Code plugin that renders live-updating flowcharts and dependency graphs of polyglot codebases in a browser, with deterministic extraction (must-be-verifiable accuracy bar) and an SCIP-inspired IR.
 
