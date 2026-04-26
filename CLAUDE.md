@@ -3,6 +3,14 @@ brain_federation: enabled
 ---
 # codeflow
 
+## ⚠ MUST FOLLOW: Git branch discipline
+
+**Develop on `main`. `pnpm build:plugin` produces the `release` branch artifact from main's source. Main is always the canonical source.**
+
+- All source changes go to `main` first
+- `release` branch is deployment-only (compiled dist + node_modules for the CC installer) — never develop directly on it
+- Every `pnpm build:plugin` run must be preceded by source changes committed to `main`
+
 **What this is:** A Claude Code plugin that renders live-updating flowcharts and dependency graphs of polyglot codebases in a browser, with deterministic extraction (must-be-verifiable accuracy bar) and an SCIP-inspired IR.
 
 **Status:** design-approved, pre-implementation. See `docs/upp/specs/2026-04-23-codeflow-v1-design.md` for the full v1 spec.
