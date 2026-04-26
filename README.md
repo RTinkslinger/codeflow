@@ -1,41 +1,90 @@
 # codeflow
 
-Live-updating flowcharts of polyglot codebases, in the browser, from Claude Code.
+Live-updating module dependency graphs for TypeScript and Python codebases, as a Claude Code plugin.
 
-Type `/flow module-deps src/` in CC → see a live-reloading Mermaid diagram of your codebase's module structure in a browser tab. Save a file → diagram updates sub-second.
+## Install
 
-## Status
+Open the plugin marketplace in Claude Code and install **codeflow**, or run:
 
-**Design phase complete.** Full v1 spec at `docs/upp/specs/2026-04-23-codeflow-v1-design.md`. Implementation not started.
+```
+/plugin marketplace add RTinkslinger/codeflow
+```
 
-## Design highlights
+Then reload plugins:
 
-- **Must-be-verifiable**: deterministic extraction (depcruise, scip-typescript, scip-python, tree-sitter-python). Claude annotates. Never invents.
-- **SCIP-inspired IR**: language-agnostic `Symbol.Descriptor` IDs. Graphology in-memory. Versioned JSON wire format.
-- **Two modes**: fast (sub-second, inferred edges) + verified (type-resolved, 8–60s). Single preview serves both.
-- **Polyglot v1**: TypeScript + Python merged into one graph. Go v3. Swift v4.
-- **UPP-pattern distribution**: install via `/plugin marketplace add`. No npm install needed on user machine.
+```
+/reload-plugins
+```
 
-## What ships in v1
+## Usage
 
-- TS + Python, module dependency graphs, merged-cross-language view
-- Fast + verified extraction modes with Option E verified-diff UX
-- Browser live-reload preview (CC doesn't support inline images; browser is the display surface)
-- 5 MCP tools: `start_preview`, `list_previews`, `stop_preview`, `render_once`, `get_ir`
-- Monorepo workspace detection
-- `codeflow doctor` CLI for environment audit + bug-report bundling
+```
+/flow src/            # Fast view — module-level graph, ~1s, dashed edges
+/flow src/ --verified # Verified view — type-resolved, 8–60s, solid edges
+```
 
-## What's deferred to v1.1 and beyond
+`/flow` opens a browser tab with a live-updating Mermaid diagram. The diagram reloads automatically on file save.
 
-See spec §2. Highlights: D2 renderer (v2), cross-language edges (v2), call-graph diagrams (v2), Go (v3), Swift (v4), architecture/C4 inference (v3).
+## Prerequisites
 
-## Starting implementation
+Fast mode ships its own extractors — no extra installs needed.
 
-1. Read `CLAUDE.md` in this directory.
-2. Read the full spec at `docs/upp/specs/2026-04-23-codeflow-v1-design.md`.
-3. Invoke the `upp:writing-plans` skill on the spec. That produces an implementation plan.
-4. Do not start coding before the plan exists.
+For **verified mode** (higher-accuracy, type-resolved edges):
+
+```bash
+# TypeScript
+npm install -g @sourcegraph/scip-typescript
+
+# Python
+pip3 install scip-python
+```
+
+## How it works
+
+| Mode | Extractors | Edge confidence | Typical latency |
+|---|---|---|---|
+| Fast | depcruise + tree-sitter | inferred (dashed) | ~1s |
+| Verified | scip-typescript + scip-python | verified (solid) | 8–60s |
+
+On first `/flow --verified`, the browser shows the fast graph immediately, then overlays the verified graph when it arrives — animated so you can see what changed. Subsequent verified refreshes are silent swaps.
+
+## Accuracy
+
+| Language | Fast | Verified |
+|---|---|---|
+| TypeScript | ~80–90% | ~90% |
+| Python (typed) | ~80–90% | ~80–90% |
+| Python (dynamic) | ~80–90% | ~60–80% |
+
+Dynamic Python (metaclasses, monkey-patching) is inherently hard to resolve statically.
+
+## Diagnostics
+
+Run the doctor to check your environment:
+
+```
+/flow doctor
+```
+
+Or directly:
+
+```bash
+node ~/.claude/plugins/cache/codeflow/codeflow/$(ls ~/.claude/plugins/cache/codeflow/codeflow/)/packages/cli/dist/main.js doctor
+```
+
+## Linux: file watcher limit
+
+If codeflow stops reacting to saves:
+
+```bash
+echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+```
+
+## What's coming
+
+- D2 renderer, cross-language edges, call-graph diagrams (v1.1)
+- Go, Swift support (v2+)
 
 ## License
 
-TBD (MIT planned). Attribution to `veelenga/claude-mermaid` (MIT) for live-reload preview pattern inspiration.
+MIT. Live-reload preview pattern inspired by `veelenga/claude-mermaid` (MIT).
