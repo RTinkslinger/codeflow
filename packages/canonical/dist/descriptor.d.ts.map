@@ -1,0 +1,1 @@
+{"version":3,"file":"descriptor.d.ts","sourceRoot":"","sources":["../src/descriptor.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,eAAe;IAC9B,MAAM,EAAE,MAAM,CAAA;IACd,OAAO,EAAE,MAAM,CAAA;IACf,GAAG,EAAE,MAAM,CAAA;IACX,UAAU,EAAE,MAAM,CAAA;CACnB;AAED,wBAAgB,eAAe,CAAC,KAAK,EAAE,eAAe,GAAG,MAAM,CAE9D;AAED,wBAAgB,eAAe,CAAC,EAAE,EAAE,MAAM,GAAG,eAAe,CAK3D"}
