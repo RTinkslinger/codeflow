@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.1.9 — 2026-04-26
+
+**Bug fixes: 7 correctness issues from adversarial review**
+
+- **Fast lane empty-IR guard**: `runFastExtraction` now uses `irs.some(ir => ir.symbols.length > 0)` (was `irs.length > 0`), matching the verified lane fix from v0.1.6
+- **Stale verifiedIR after failure**: both failure branches in `runVerifiedExtraction` now clear `record.verifiedIR = null` so `getIR` falls through to fastIR after a re-extraction failure
+- **depcruise `--exclude` regex**: changed from `^(node_modules|\.git)` to `(^|/)(node_modules|\.git)(/|$)` — the old pattern missed pnpm workspace nested paths like `packages/cli/node_modules/`
+- **`doctor` CLI subcommand**: `node dist/main.js doctor` now works — outputs a JSON diagnostics report; previously fell through to MCP stdio mode
+- **build-plugin.ts version sync**: script now validates that `package.json`, `.claude-plugin/plugin.json`, and `.claude-plugin/marketplace.json` all match before staging the release
+- **`CHECKPOINT.md` gitignored**: added to `.gitignore` alongside `TRACES.md`
+- **README fixes**: removed non-existent `/flow doctor` command reference, fixed bash doctor invocation to use explicit version path
+
 ## v0.1.8 — 2026-04-26
 
 **Fix: plugin cache directory named incorrectly**

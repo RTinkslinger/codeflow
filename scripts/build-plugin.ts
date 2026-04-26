@@ -52,6 +52,24 @@ run('git add -f node_modules/')
 
 const version = (JSON.parse(fs.readFileSync('package.json', 'utf-8')) as { version?: string }).version
 if (!version) throw new Error('package.json missing version field')
+
+// Enforce that all three version files are in sync before releasing
+const pluginJson = JSON.parse(fs.readFileSync('.claude-plugin/plugin.json', 'utf-8')) as { version?: string }
+const marketplaceJson = JSON.parse(fs.readFileSync('.claude-plugin/marketplace.json', 'utf-8')) as {
+  metadata?: { version?: string }; plugins?: Array<{ version?: string }>
+}
+const pluginVersion = pluginJson.version
+const metaVersion = marketplaceJson.metadata?.version
+const pluginsVersion = marketplaceJson.plugins?.[0]?.version
+const allVersions = [version, pluginVersion, metaVersion, pluginsVersion]
+if (allVersions.some(v => v !== version)) {
+  console.error(`Version mismatch — all three files must match before release:`)
+  console.error(`  package.json:                           ${version}`)
+  console.error(`  .claude-plugin/plugin.json:             ${pluginVersion}`)
+  console.error(`  .claude-plugin/marketplace.json meta:   ${metaVersion}`)
+  console.error(`  .claude-plugin/marketplace.json plugin: ${pluginsVersion}`)
+  process.exit(1)
+}
 run(`git commit -m "release: v${version}"`)
 run(`git tag -f v${version}`)
 

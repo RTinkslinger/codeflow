@@ -45,4 +45,23 @@ describe('DepcruiseExtractor spawn invocation', () => {
     expect(excludePattern).toMatch(/node_modules/)
     expect(excludePattern).toMatch(/\.git/)
   })
+
+  it('exclude pattern matches pnpm workspace nested node_modules, not only root-level', async () => {
+    // Bug: pattern ^(node_modules|\.git) anchors at start of path — misses
+    //      packages/cli/node_modules/foo which appears in pnpm workspace layouts.
+    // Fix: (^|/)(node_modules|\.git)(/|$) matches both root and mid-path occurrences.
+    const extractor = new DepcruiseExtractor()
+    await extractor.extract({ path: tmpDir, root: tmpDir })
+
+    const args = capturedArgs[0]!
+    const excludeIdx = args.indexOf('--exclude')
+    const excludePattern = args[excludeIdx + 1] ?? ''
+    const regex = new RegExp(excludePattern)
+
+    // Root-level node_modules must still match
+    expect(regex.test('node_modules/some-dep')).toBe(true)
+    // pnpm workspace nested path — this is what the bug was missing
+    expect(regex.test('packages/cli/node_modules/some-dep')).toBe(true)
+    expect(regex.test('packages/extractor-depcruise/node_modules/foo/index.js')).toBe(true)
+  })
 })

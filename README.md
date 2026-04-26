@@ -51,7 +51,7 @@ On first `/flow --verified`, the browser shows the fast graph immediately. When 
 **Prerequisites for verified mode:**
 
 ```bash
-# TypeScript
+# TypeScript (includes the scip binary)
 npm install -g @sourcegraph/scip-typescript
 
 # Python
@@ -101,17 +101,13 @@ These are what the `/flow` skill calls under the hood. You can call them directl
 
 ## Diagnostics
 
-```
-/flow doctor
-```
-
-Checks Node.js version, OS, and whether each extractor binary is available (`depcruise`, `scip-typescript`, `scip-python`, `scip`). Reports recent errors from the local diagnostics store.
-
-Or run directly:
+Run the built-in doctor from the CLI:
 
 ```bash
-node ~/.claude/plugins/cache/codeflow/codeflow/$(ls ~/.claude/plugins/cache/codeflow/codeflow/)/packages/cli/dist/main.js doctor
+node ~/.claude/plugins/cache/codeflow/codeflow/0.1.9/packages/cli/dist/main.js doctor
 ```
+
+Checks Node.js version, OS, and whether each extractor binary is available (`depcruise`, `scip-typescript`, `scip-python`, `scip`). Reports recent errors from the local diagnostics store. Output is JSON.
 
 ---
 

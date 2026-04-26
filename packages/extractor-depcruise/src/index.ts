@@ -61,7 +61,7 @@ export class DepcruiseExtractor implements Extractor {
     try {
       const result = await execFileAsync(
         DEPCRUISE_BIN,
-        ['--no-config', '--exclude', '^(node_modules|\\.git)', '--output-type', 'json', root],
+        ['--no-config', '--exclude', '(^|/)(node_modules|\\.git)(/|$)', '--output-type', 'json', root],
         { cwd: root, timeout: opts.timeoutMs ?? 90_000, maxBuffer: 50 * 1024 * 1024 }
       )
       stdout = result.stdout

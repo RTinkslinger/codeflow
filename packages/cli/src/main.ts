@@ -1,5 +1,6 @@
 import { CodeflowMCP } from './mcp.js'
 import { createLogger, LOG_DIR } from '@codeflow/core'
+import { runDoctor } from './doctor.js'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { execFileSync } from 'node:child_process'
@@ -13,6 +14,13 @@ const args = process.argv.slice(2)
 // Handle --version flag (required by smoke test and doctor)
 if (args[0] === '--version' || args[0] === '-v') {
   process.stdout.write(pkg.version + '\n')
+  process.exit(0)
+}
+
+// Handle doctor subcommand
+if (args[0] === 'doctor') {
+  const report = await runDoctor()
+  process.stdout.write(JSON.stringify(report, null, 2) + '\n')
   process.exit(0)
 }
 

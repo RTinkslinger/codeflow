@@ -24,6 +24,7 @@ logs/
 
 # Session artifacts
 TRACES.md
+CHECKPOINT.md
 
 # Test
 coverage/

@@ -94,7 +94,7 @@ export class CodeflowMCP {
       if (tsResult.status === 'fulfilled') irs.push(tsResult.value.ir)
       if (pyResult.status === 'fulfilled') irs.push(pyResult.value.ir)
 
-      if (irs.length > 0) {
+      if (irs.some(ir => ir.symbols.length > 0)) {
         const merged = mergeIRs(irs)
         const { symbols, relationships } = canonicalMerge(merged.symbols, record.path, merged.relationships)
         const canonical = { ...merged, symbols, relationships }
@@ -143,11 +143,13 @@ export class CodeflowMCP {
         record.verifiedLane.onOk()
       } else {
         record.verifiedLane.onFail()
+        record.verifiedIR = null
         // Lane-scoped: fast view survives — broadcast warning, not error
         record.broadcaster.broadcast({ type: 'update', mermaid: record.fastIR ? renderMermaid(record.fastIR) : 'graph LR', badge: '● fast view (verified failed)' })
       }
     } catch (err) {
       record.verifiedLane.onFail()
+      record.verifiedIR = null
       record.lastError = err
       record.broadcaster.broadcast({ type: 'update', mermaid: record.fastIR ? renderMermaid(record.fastIR) : 'graph LR', badge: '● fast view (verified failed)' })
     }
