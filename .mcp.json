@@ -1,7 +1,6 @@
 {
-  "mcpServers": {
-    "codeflow": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/bin/codeflow-mcp"
-    }
+  "codeflow": {
+    "command": "node",
+    "args": ["${CLAUDE_PLUGIN_ROOT}/packages/cli/dist/main.js"]
   }
 }
