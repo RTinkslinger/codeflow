@@ -1,0 +1,24 @@
+name: Plugin Install Smoke Test
+on:
+  pull_request:
+    branches: [release]
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Verify committed node_modules
+        run: ls node_modules/graphology
+      - name: Verify built CLI
+        run: ls packages/cli/dist/main.js
+      - name: CLI version check
+        run: node packages/cli/dist/main.js --version
+      - name: render_once smoke test
+        run: |
+          OUT=$(timeout 30 node packages/cli/dist/main.js render_once tests/fixtures/pure-ts/ 2>/dev/null)
+          MMD_PATH=$(echo "$OUT" | node -e "process.stdin.setEncoding('utf-8');let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d).filePath))")
+          grep -q '^graph' "$MMD_PATH" || (echo "Mermaid validation failed: $MMD_PATH" && exit 1)
+          echo "render_once OK: $MMD_PATH"
+        timeout-minutes: 1
