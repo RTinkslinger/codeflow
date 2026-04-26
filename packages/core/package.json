@@ -1,0 +1,23 @@
+{
+  "name": "@codeflow/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "pino": "^10.3.1",
+    "pino-roll": "^4.0.0",
+    "zod": "^4.3.6"
+  }
+}

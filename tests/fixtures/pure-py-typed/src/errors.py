@@ -1,0 +1,8 @@
+class AppError(Exception):
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+class AuthError(AppError):
+    def __init__(self, message: str) -> None:
+        super().__init__('AUTH_ERROR', message)

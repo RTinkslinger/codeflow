@@ -1,0 +1,33 @@
+{
+  "name": "@codeflow/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/main.js",
+  "bin": { "codeflow": "./dist/main.js" },
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/main.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@codeflow/canonical": "workspace:*",
+    "@codeflow/core": "workspace:*",
+    "@codeflow/extractor-depcruise": "workspace:*",
+    "@codeflow/extractor-scip-python": "workspace:*",
+    "@codeflow/extractor-scip-typescript": "workspace:*",
+    "@codeflow/extractor-treesitter-python": "workspace:*",
+    "@codeflow/preview": "workspace:*",
+    "@codeflow/renderer-mermaid": "workspace:*",
+    "graphology": "^0.26.0"
+  },
+  "devDependencies": {
+    "@codeflow/test-utils": "workspace:*"
+  }
+}
