@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import path from 'node:path'
-import { detectWorkspaces } from './detect-workspaces.js'
+import fs from 'node:fs/promises'
+import { detectWorkspaces, _resetMemoCache } from './detect-workspaces.js'
 
 describe('detectWorkspaces — TS', () => {
   it('reads pnpm-workspace.yaml', async () => {
@@ -85,5 +86,43 @@ describe('detectWorkspaces — Py', () => {
     const ws = await detectWorkspaces(root, 'py')
     const alpha = ws.find(w => w.workspaceRel === 'packages/alpha')!
     expect(alpha.displayName).toBe('alpha')
+  })
+})
+
+describe('detectWorkspaces memoization', () => {
+  it('returns cached result on repeat call without manifest mtime change', async () => {
+    _resetMemoCache()
+    const root = path.resolve(__dirname, '../tests/fixtures/ws-pnpm')
+    const a = await detectWorkspaces(root, 'ts')
+    const b = await detectWorkspaces(root, 'ts')
+    // Same array reference indicates the cached value was returned
+    expect(b).toBe(a)
+  })
+
+  it('invalidates when manifest mtime changes', async () => {
+    _resetMemoCache()
+    const root = path.resolve(__dirname, '../tests/fixtures/ws-pnpm')
+    const a = await detectWorkspaces(root, 'ts')
+    const yml = path.join(root, 'pnpm-workspace.yaml')
+    const stat = await fs.stat(yml)
+    await fs.utimes(yml, stat.atime, new Date(Date.now() + 1000))
+    const b = await detectWorkspaces(root, 'ts')
+    try {
+      expect(b).not.toBe(a)   // recomputed → different array reference
+    } finally {
+      // Restore mtime even if the assertion fails so other tests aren't affected
+      await fs.utimes(yml, stat.atime, stat.mtime)
+      _resetMemoCache()
+    }
+  })
+
+  it('separate cache per language', async () => {
+    _resetMemoCache()
+    const root = path.resolve(__dirname, '../tests/fixtures/ws-pnpm')
+    const ts1 = await detectWorkspaces(root, 'ts')
+    const py1 = await detectWorkspaces(root, 'py')   // different cache key
+    const ts2 = await detectWorkspaces(root, 'ts')
+    expect(ts2).toBe(ts1)
+    expect(py1).not.toBe(ts1)   // different language → different result
   })
 })

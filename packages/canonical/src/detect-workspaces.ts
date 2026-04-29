@@ -3,10 +3,35 @@ import fs from 'node:fs/promises'
 import { canonicalizePath, posixRelative } from './canonicalizer.js'
 import type { Workspace, WorkspaceLanguage } from './workspace-types.js'
 
+const memoCache = new Map<string, { mtimeKey: string; workspaces: Workspace[] }>()
+
+export function _resetMemoCache(): void {
+  memoCache.clear()
+}
+
+async function manifestMtimeKey(rootPath: string): Promise<string> {
+  const candidates = ['pnpm-workspace.yaml', 'package.json', 'pyproject.toml']
+  const stats: string[] = []
+  for (const c of candidates) {
+    try {
+      const stat = await fs.stat(path.join(rootPath, c))
+      stats.push(`${c}:${stat.mtimeMs}`)
+    } catch { /* not present */ }
+  }
+  return stats.join('|')
+}
+
 export async function detectWorkspaces(rootPath: string, language: WorkspaceLanguage): Promise<Workspace[]> {
   const canonicalRoot = canonicalizePath(rootPath)
-  if (language === 'ts') return detectTsWorkspaces(canonicalRoot)
-  return detectPyWorkspaces(canonicalRoot)
+  const key = `${canonicalRoot}::${language}`
+  const mtimeKey = await manifestMtimeKey(canonicalRoot)
+  const cached = memoCache.get(key)
+  if (cached && cached.mtimeKey === mtimeKey) return cached.workspaces
+  const workspaces = language === 'ts'
+    ? await detectTsWorkspaces(canonicalRoot)
+    : await detectPyWorkspaces(canonicalRoot)
+  memoCache.set(key, { mtimeKey, workspaces })
+  return workspaces
 }
 
 async function detectTsWorkspaces(rootPath: string): Promise<Workspace[]> {
