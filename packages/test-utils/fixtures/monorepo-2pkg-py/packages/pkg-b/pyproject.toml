@@ -1,0 +1,3 @@
+[project]
+name = "pkg-b"
+dependencies = ["pkg-a"]

@@ -1,12 +1,12 @@
-import { execFile, execFileSync } from 'node:child_process'
-import { promisify } from 'node:util'
+import { execFileSync, spawn } from 'node:child_process'
+import { cpus } from 'node:os'
 import path from 'node:path'
 import os from 'node:os'
 import fs from 'node:fs'
 import type { Extractor, ExtractorOptions, ExtractorResult, IR, CFSymbol, Relationship } from '@codeflow/core'
-import { canonicalizePath, posixRelative } from '@codeflow/canonical'
-
-const execFileAsync = promisify(execFile)
+import { runPerWorkspace } from '@codeflow/core'
+import { canonicalizePath, posixRelative, detectWorkspaces, reRootIR } from '@codeflow/canonical'
+import type { Workspace } from '@codeflow/canonical'
 
 /**
  * Extract a human-readable name from a SCIP symbol descriptor.
@@ -74,33 +74,91 @@ export class ScipPythonExtractor implements Extractor {
   async extract(opts: ExtractorOptions): Promise<ExtractorResult> {
     const start = Date.now()
     const root = canonicalizePath(opts.root)
-    const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'codeflow-scip-py-'))
-    const outFile = path.join(outDir, 'index.scip')
-    const invocation = `scip-python index ${opts.path}`
 
-    let stderrTail: string | undefined
+    const allWorkspaces = await detectWorkspaces(opts.path, 'py')
+    // All Python workspaces are leaves (no tsconfig references concept)
+    const workspaces = allWorkspaces.filter(w => w.isLeaf)
 
-    try {
-      const result = await execFileAsync(
-        'scip-python', ['index', '--output', outFile, '--cwd', root],
-        { cwd: root, timeout: opts.timeoutMs ?? 90_000 }
-      )
-      if (result.stderr) stderrTail = result.stderr.slice(-2000)
-    } catch (err: unknown) {
-      const e = err as { stderr?: string; message: string }
-      stderrTail = e.stderr?.slice(-2000) ?? e.message
-      fs.rmSync(outDir, { recursive: true, force: true })
-      const result: ExtractorResult = { ir: emptyIR(this.name, this.version, invocation, root, true), durationMs: Date.now() - start }
-      if (stderrTail !== undefined) result.stderrTail = stderrTail
-      return result
+    if (workspaces.length === 0) {
+      return {
+        ir: emptyIR(this.name, this.version, '', root, true),
+        durationMs: Date.now() - start,
+        workspaceErrors: [],
+      }
     }
 
-    const ir = parseSCIPOutputPy(outFile, root, this.name, this.version, invocation)
-    fs.rmSync(outDir, { recursive: true, force: true })
+    const concurrency = Math.min(4, cpus().length)
+    const { results, errors, cancelled } = await runPerWorkspace(
+      workspaces,
+      (w, signal) => this.runScipForWorkspace(w as Workspace, signal),
+      { concurrency, timeoutMs: opts.timeoutMs ?? 90_000, laneBudgetMs: 300_000 },
+    )
 
-    const result: ExtractorResult = { ir, durationMs: Date.now() - start }
-    if (stderrTail !== undefined) result.stderrTail = stderrTail
-    return result
+    // Re-root each per-workspace IR to repo-root and stamp workspaceRel
+    const reRooted = (results as Array<{ ir: IR; workspace: Workspace }>).map(r =>
+      reRootIR(r.ir, root, r.workspace.workspaceRel),
+    )
+
+    // Build the per-workspace meta map
+    const workspacesMeta: Record<string, { displayName: string; manifest: Workspace['manifest'] }> = {}
+    for (const w of workspaces) {
+      workspacesMeta[w.workspaceRel] = { displayName: w.displayName, manifest: w.manifest }
+    }
+
+    // Concatenate IRs (canonical merge happens later in mcp.ts via canonicalMerge)
+    const isPartial = errors.length > 0 || cancelled
+    const concatenated: IR = {
+      schemaVersion: '1',
+      meta: {
+        extractor: { name: this.name, version: this.version, invocation: `scip-python fan-out ${opts.path}` },
+        root,
+        ...(isPartial ? { partial: true } : {}),
+        workspaces: workspacesMeta,
+      },
+      documents: reRooted.flatMap(ir => ir.documents),
+      symbols: reRooted.flatMap(ir => ir.symbols),
+      relationships: reRooted.flatMap(ir => ir.relationships),
+    }
+
+    return {
+      ir: concatenated,
+      durationMs: Date.now() - start,
+      workspaceErrors: errors,
+    }
+  }
+
+  private async runScipForWorkspace(w: Workspace, signal: AbortSignal): Promise<{ ir: IR; workspace: Workspace }> {
+    const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'codeflow-scip-py-'))
+    const outFile = path.join(outDir, 'index.scip')
+
+    const child = spawn('scip-python', ['index', '--output', outFile, '--cwd', w.workspacePath], {
+      cwd: w.workspacePath,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+
+    let stderr = ''
+    child.stderr?.on('data', (d) => { stderr += String(d).slice(-2000) })
+
+    const onAbort = (): void => {
+      child.kill('SIGTERM')
+      setTimeout(() => {
+        try { child.kill('SIGKILL') } catch { /* already exited */ }
+      }, 2_000)
+    }
+    signal.addEventListener('abort', onAbort)
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        child.on('exit', (code) => code === 0 ? resolve() : reject(new Error(`scip-python exited ${code}: ${stderr.slice(-500)}`)))
+        child.on('error', reject)
+      })
+
+      const ir = parseSCIPOutputPy(outFile, w.workspacePath, this.name, this.version, `scip-python index --cwd ${w.workspacePath}`)
+      return { ir, workspace: w }
+    } finally {
+      signal.removeEventListener('abort', onAbort)
+      try { fs.rmSync(outDir, { recursive: true, force: true }) } catch { /* tmp dir cleanup */ }
+    }
   }
 }
 
