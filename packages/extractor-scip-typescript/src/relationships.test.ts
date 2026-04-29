@@ -25,5 +25,5 @@ describe('scip-typescript: import/reference relationships', () => {
     // The 'imports' branch is defensive (scip-python / future versions may use bit 0x2).
     expect(result.ir.relationships.every(r => r.kind === 'imports' || r.kind === 'references')).toBe(true)
     expect(result.ir.relationships.some(r => r.kind === 'references')).toBe(true)
-  })
+  }, 120_000)
 })

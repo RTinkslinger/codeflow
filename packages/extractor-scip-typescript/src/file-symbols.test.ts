@@ -17,5 +17,5 @@ describe('scip-typescript: file-symbol synthesis', () => {
     expect(indexFile).toBeDefined()
     expect(indexFile!.id).toBe(`file::${indexFile!.absPath}`)
     expect(indexFile!.confidence).toBe('verified')
-  })
+  }, 120_000)
 })

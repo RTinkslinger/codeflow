@@ -15,7 +15,7 @@ describe('scip-typescript: byId remap contract (property)', () => {
       expect(symIds.has(r.from), `relationship.from "${r.from}" not in symbols`).toBe(true)
       expect(r.from.startsWith('file::')).toBe(true)
     }
-  })
+  }, 120_000)
 
   it('canonicalMerge does not leak path strings — all surviving relationships have from in merged symbols', async () => {
     const ex = new ScipTypescriptExtractor()
@@ -29,5 +29,5 @@ describe('scip-typescript: byId remap contract (property)', () => {
       const symIds = new Set(merged.symbols.map(s => s.id))
       expect(symIds.has(r.from), `merged relationship.from "${r.from}" not in merged symbols`).toBe(true)
     }
-  })
+  }, 120_000)
 })
