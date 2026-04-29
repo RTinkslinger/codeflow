@@ -10,6 +10,7 @@ export interface ExtractorResult {
   ir: IR
   stderrTail?: string
   durationMs: number
+  workspaceErrors?: Array<{ workspace: unknown; error: unknown }>   // (Task 22)
 }
 
 export interface Extractor {
