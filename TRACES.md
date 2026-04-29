@@ -41,3 +41,61 @@ Never kill the MCP server process within a session. Claude Code marks it permane
 
 ### Lesson
 Never `rm -rf` a directory that is the active bash shell's working directory. The shell's cwd becomes invalid and ALL subsequent bash commands fail with "Working directory does not exist." The fix is restarting Claude Code — but it kills the session. Prefer patching files in-place over delete+reinstall when the directory is the session cwd.
+
+---
+
+## 2026-04-26 — Session: MCP registration RCA + v0.1.10 fix
+
+### What changed
+- `.mcp.json` — changed from `{ "mcpServers": { "codeflow": {...} } }` to flat `{ "codeflow": { "command": "node", "args": [...] } }`. The `mcpServers` wrapper is for HTTP-type only; stdio plugins require flat format.
+- `.claude-plugin/marketplace.json` — added `mcpServers` to `plugins[0]` (qmd pattern); bumped to 0.1.10
+- `.claude-plugin/plugin.json` — bumped to 0.1.10
+- `package.json` — bumped to 0.1.10
+- `bin/codeflow-mcp` — deleted; shell script wrapper was unnecessary, `node` direct invocation is correct
+- `.rca/` — canonical root cause analysis record from /rca skill
+- `MEMORY.md` — project memory index
+
+### Root causes found (via /rca, 3 judges, all accept-with-caveats)
+**H1 (high confidence, root since day 1):** `.mcp.json` used `{ "mcpServers": {...} }` wrapper. CC requires flat `{ "serverName": {...} }` for stdio plugin MCPs. The wrapper is only valid for HTTP transport (vercel, supabase). Working stdio plugins (playwright, context7) all use the flat format. This mismatch was in the initial scaffold commit `356ddc5` and persisted through all versions.
+
+**H2 (medium, 0.1.9 regression):** commit `ac828a4` changed `command` from `"node"` to `"${CLAUDE_PLUGIN_ROOT}/bin/codeflow-mcp"`. Reverted. Direct `node` invocation with path in `args` is the correct pattern.
+
+**H5 (medium, judge-raised):** `marketplace.json > plugins[0]` had no `mcpServers` field. qmd (the only other plugin using marketplace.json for MCP) has it. Added to cover both CC registration paths.
+
+**H3 (open question):** Whether project-scoped `enabledPlugins` (in `.claude/settings.local.json`) is sufficient for MCP server startup — all working stdio MCP plugins are globally enabled; codeflow is the only one project-scoped. Verification in a new CC session will resolve this.
+
+### Prior session assumption that was wrong
+Previous session concluded "missing `codeflow@codeflow` from global enabledPlugins" was the primary root cause. This was incorrect — `.claude/settings.local.json` already had the entry for the repo-scoped install. The /rca skill caught this in Round 1.
+
+### Known gaps going in to next session
+- **H3 unresolved:** verify that project-scoped enabledPlugins is sufficient for MCP startup (open new CC session, check deferred tools)
+- If H3 blocks: add `"codeflow@codeflow": true` to global `~/.claude/settings.json`
+- After MCP verified working: run `/flow` end-to-end production test
+
+### Lesson
+CC plugin `.mcp.json` format for stdio ≠ standard project `.mcp.json` format. The standard project format (`{ "mcpServers": { ... } }`) is NOT correct for plugin cache `.mcp.json` files. Plugin cache files must use the flat `{ "serverName": { ... } }` format. Only HTTP-transport plugins use the `mcpServers` wrapper in the cache. This is not documented — discovered by comparing working plugins (playwright, context7) against broken ones (codeflow). Use /rca before touching plugin config files; assumptions here have been wrong twice.
+
+---
+
+## 2026-04-29 — Correction to 0.1.10 lesson: flat-format hypothesis was WRONG
+
+### What we found
+The 0.1.10 "flat format" conclusion above is incorrect. Authoritative Anthropic docs confirm:
+
+- **[code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp)** — both project-scope and plugin-scope `.mcp.json` use the same `{ "mcpServers": {...} }` schema.
+- **[code.claude.com/docs/en/plugins-reference](https://code.claude.com/docs/en/plugins-reference)** — same.
+- **[code.claude.com/docs/en/plugin-marketplaces](https://code.claude.com/docs/en/plugin-marketplaces)** — `marketplace.json > plugins[].mcpServers` is also valid (advanced plugin entry pattern), same schema.
+
+There is **no documented "flat format"** for any `.mcp.json` in CC.
+
+### Why the broken file appeared to work in 0.1.10
+The MCP server registered successfully because `marketplace.json > plugins[0].mcpServers` (added in 0.1.10) was independently doing the registration with the correct wrapped schema. The flat `.mcp.json` was being silently ignored by the plugin loader. /doctor caught the parse failure: `[Failed to parse] Project config (shared via .mcp.json) — mcpServers: Does not adhere to MCP server configuration schema`.
+
+### Comparison to playwright/context7 was a false positive
+Those plugins likely have their own correctly-wrapped `.mcp.json` OR rely on marketplace.json registration. The "flat format works" assumption was never directly verified — the conclusion was inferred from observing that 0.1.10 "worked" without checking which file path was actually carrying the registration.
+
+### Fix in 0.1.11
+Rewrap `.mcp.json` with `mcpServers` key. Same file at project root and shipped in plugin. /doctor parse error resolves.
+
+### Lesson
+**Verify against official docs, not by inference from working systems.** The /rca process in 0.1.10 produced a confident wrong answer because it never consulted code.claude.com directly. Subagent rounds reinforced the inference instead of breaking it. When changing a config schema, **the docs are the ground truth** — comparison to other plugins is a secondary signal at best.
