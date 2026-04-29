@@ -51,7 +51,16 @@ export const PREVIEW_HTML = `<!DOCTYPE html>
   <div id="graph"><div class="mermaid" id="diagram"></div></div>
   <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   <script>
-    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      // Codeflow produces large IRs on real monorepos (codeflow itself has
+      // ~2k symbols + 8k relationships). Mermaid's default 50KB / 500-edge
+      // limits block them. Bump to 5MB / 10k edges; v1.1 can introduce
+      // sampling/collapsing for huge projects.
+      maxTextSize: 5_000_000,
+      maxEdges: 10_000,
+    });
     const ws = new WebSocket('ws://' + location.host + '/ws');
     ws.onmessage = async (e) => {
       const msg = JSON.parse(e.data);

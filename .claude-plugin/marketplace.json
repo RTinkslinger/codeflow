@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Live-updating module dependency graphs for polyglot codebases",
-    "version": "0.1.14",
+    "version": "0.1.15",
     "pluginRoot": "./"
   },
   "plugins": [
     {
       "name": "codeflow",
       "description": "Live-updating module dependency flowcharts for polyglot codebases. Type /flow to open a live browser diagram.",
-      "version": "0.1.14",
+      "version": "0.1.15",
       "source": "./",
       "author": {
         "name": "Aakash Kumar"
