@@ -5,6 +5,14 @@ function deduplicateDocuments(docs: CFDocument[]): CFDocument[] {
   return docs.filter(d => seen.has(d.absPath) ? false : (seen.add(d.absPath), true))
 }
 
+function mergeWorkspaceMaps(irs: IR[]): IR['meta']['workspaces'] {
+  const out: Record<string, { displayName: string; manifest: 'pnpm' | 'pkgjson' | 'pyproject' | 'setup.py' | 'fs-fallback' }> = {}
+  for (const ir of irs) {
+    if (ir.meta.workspaces) Object.assign(out, ir.meta.workspaces)
+  }
+  return Object.keys(out).length > 0 ? out : undefined
+}
+
 export function mergeIRs(irs: IR[]): IR {
   if (irs.length === 0) {
     return { schemaVersion: '1', meta: { extractor: { name: 'merged', version: '0', invocation: '' }, root: '' }, documents: [], symbols: [], relationships: [] }
@@ -32,9 +40,19 @@ export function mergeIRs(irs: IR[]): IR {
   }
 
   const root = irs[0]!
+  const isPartial = irs.some(ir => ir.meta.partial === true)
+  const workspaces = mergeWorkspaceMaps(irs)
+  const baseMeta = { ...root.meta }
+  delete baseMeta.partial
+  delete baseMeta.workspaces
   return {
     schemaVersion: '1',
-    meta: { ...root.meta, extractor: { name: 'merged', version: '0', invocation: 'merged' } },
+    meta: {
+      ...baseMeta,
+      extractor: { name: 'merged', version: '0', invocation: 'merged' },
+      ...(isPartial ? { partial: true } : {}),
+      ...(workspaces ? { workspaces } : {}),
+    },
     documents: deduplicateDocuments(irs.flatMap(ir => ir.documents)),
     symbols: [...symbolMap.values()],
     relationships: [...relMap.values()],
