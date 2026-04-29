@@ -99,3 +99,22 @@ Rewrap `.mcp.json` with `mcpServers` key. Same file at project root and shipped 
 
 ### Lesson
 **Verify against official docs, not by inference from working systems.** The /rca process in 0.1.10 produced a confident wrong answer because it never consulted code.claude.com directly. Subagent rounds reinforced the inference instead of breaking it. When changing a config schema, **the docs are the ground truth** — comparison to other plugins is a secondary signal at best.
+
+---
+
+## 2026-04-29 — Follow-up v0.1.12: project-root `.mcp.json` removed entirely
+
+### What surfaced after 0.1.11
+`/doctor` warning: `[codeflow] mcpServers.codeflow: Missing environment variables: CLAUDE_PLUGIN_ROOT`. The schema fix made the file parseable — and once parseable, CC validated env-var expansions and noticed `${CLAUDE_PLUGIN_ROOT}` is unset in project scope (plugin-scope-only variable).
+
+### Fix
+- Inlined `mcpServers` into `.claude-plugin/plugin.json` (per [code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp), this is a documented alternate location)
+- Deleted project-root `.mcp.json`
+- Updated `scripts/build-plugin.ts` to drop `.mcp.json` from `git add`
+- `marketplace.json > plugins[0].mcpServers` retained as redundancy
+
+### Why this is the final answer for source-repo-IS-plugin-root setups
+Project root and plugin root collide in this repo. Any file CC interprets as both is a problem. By moving MCP config into `.claude-plugin/plugin.json` (not at project root), only the plugin loader reads it — no project-context interpretation, no env-var warnings, no schema confusion.
+
+### Lesson
+**When source repo == plugin root, prefer plugin.json inline over .mcp.json at root.** The `.mcp.json` at root is fine for end-users (it lives only in the plugin cache where CLAUDE_PLUGIN_ROOT resolves), but in dev it gets double-parsed. `plugin.json`'s `mcpServers` field avoids the collision entirely.

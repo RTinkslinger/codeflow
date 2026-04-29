@@ -35,7 +35,7 @@ console.log('✓ All critical artifacts present')
 run('git checkout -B release')
 
 // Stage source files (version bump, plugin metadata, commands, config)
-run('git add package.json .claude-plugin/ commands/ .mcp.json')
+run('git add package.json .claude-plugin/ commands/')
 
 // Force-add built artifacts (normally gitignored on main)
 run('git add -f packages/cli/dist/ packages/core/dist/ packages/canonical/dist/')
