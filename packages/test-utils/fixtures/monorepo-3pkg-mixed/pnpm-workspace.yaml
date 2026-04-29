@@ -1,0 +1,3 @@
+packages:
+  - "packages/pkg-a"
+  - "packages/pkg-b"

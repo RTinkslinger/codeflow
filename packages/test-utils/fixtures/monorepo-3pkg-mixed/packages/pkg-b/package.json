@@ -1,0 +1,8 @@
+{
+  "name": "@mixed/pkg-b",
+  "version": "0.0.0",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@mixed/pkg-a": "workspace:*"
+  }
+}

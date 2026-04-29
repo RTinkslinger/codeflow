@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@mixed/pkg-a": ["../pkg-a/src/index.ts"]
+    },
+    "baseUrl": "."
+  },
+  "include": ["src/**/*"]
+}
