@@ -140,6 +140,33 @@ async function buildTsWorkspace(
   }
 }
 
+async function buildPyWorkspaceFromSetupPy(
+  rootPath: string,
+  workspacePath: string,
+): Promise<Workspace> {
+  const canonicalWsPath = canonicalizePath(workspacePath)
+  const setupPath = path.join(canonicalWsPath, 'setup.py')
+  let displayName = posixRelative(rootPath, canonicalWsPath) || '.'
+  try {
+    const content = await fs.readFile(setupPath, 'utf-8')
+    const { extractSetupPyName } = await import('./extract-setup-py-name.js')
+    const { name } = extractSetupPyName(content)
+    if (name) displayName = name
+  } catch {
+    // keep displayName fallback
+  }
+  return {
+    rootPath,
+    workspacePath: canonicalWsPath,
+    workspaceRel: posixRelative(rootPath, canonicalWsPath) || '.',
+    manifest: 'setup.py',
+    language: 'py',
+    configPath: setupPath,
+    isLeaf: true,
+    displayName,
+  }
+}
+
 async function detectPyWorkspaces(rootPath: string): Promise<Workspace[]> {
   const tomlPath = path.join(rootPath, 'pyproject.toml')
   if (await exists(tomlPath)) {
@@ -167,19 +194,26 @@ async function detectPyWorkspaces(rootPath: string): Promise<Workspace[]> {
     // Single pyproject.toml at root
     return [await buildPyWorkspace(rootPath, rootPath, 'pyproject')]
   }
-  // fs-walk
+  // Priority 3: setup.py at root (only if no pyproject at root, which is guaranteed here since we fell through).
+  const setupPath = path.join(rootPath, 'setup.py')
+  if (await exists(setupPath)) {
+    return [await buildPyWorkspaceFromSetupPy(rootPath, rootPath)]
+  }
+  // fs-walk: pyproject.toml AND setup.py (pyproject wins per-dir)
   const fastGlob = (await import('fast-glob')).default
   const ignore = ['**/node_modules/**', '**/.git/**', '**/.venv/**', '**/__pycache__/**', '**/dist/**', '**/build/**']
-  const found = await fastGlob('**/pyproject.toml', {
-    cwd: rootPath,
-    ignore,
-    absolute: true,
-    deep: 5,
-    onlyFiles: true,
-  })
-  if (found.length > 0) {
-    return Promise.all(found.map(f => buildPyWorkspace(rootPath, path.dirname(f), 'fs-fallback')))
+  const pyprojects = await fastGlob('**/pyproject.toml', { cwd: rootPath, ignore, absolute: true, deep: 5, onlyFiles: true })
+  const setups = await fastGlob('**/setup.py', { cwd: rootPath, ignore, absolute: true, deep: 5, onlyFiles: true })
+  const pyprojectDirs = new Set(pyprojects.map(f => path.dirname(f)))
+  const results: Workspace[] = []
+  for (const f of pyprojects) {
+    results.push(await buildPyWorkspace(rootPath, path.dirname(f), 'fs-fallback'))
   }
+  for (const f of setups) {
+    const d = path.dirname(f)
+    if (!pyprojectDirs.has(d)) results.push(await buildPyWorkspaceFromSetupPy(rootPath, d))
+  }
+  if (results.length > 0) return results
   return [singlePathFallback(rootPath, 'py')]
 }
 
