@@ -41,25 +41,30 @@ export function renderMermaid(ir: IR, direction: 'TD' | 'LR' = 'LR'): string {
   const lines: string[] = [`graph ${direction}`]
   const safeId = buildSafeIdMap(ir)
 
-  const byLang = new Map<string, CFSymbol[]>()
+  const ROOT = '__root__'
+  const byWorkspace = new Map<string, CFSymbol[]>()
   for (const sym of ir.symbols) {
-    const group = byLang.get(sym.language) ?? []
+    const key = sym.workspaceRel ?? ROOT
+    const group = byWorkspace.get(key) ?? []
     group.push(sym)
-    byLang.set(sym.language, group)
+    byWorkspace.set(key, group)
   }
 
-  if (byLang.size > 1) {
-    for (const [lang, syms] of byLang) {
-      lines.push(`  subgraph ${lang}`)
-      for (const sym of syms) {
-        lines.push(`    ${safeId(sym.id)}["${nodeLabel(sym)}"]`)
-      }
-      lines.push(`  end`)
+  // Emit __root__ symbols at top level (no subgraph)
+  for (const sym of byWorkspace.get(ROOT) ?? []) {
+    lines.push(`  ${safeId(sym.id)}["${nodeLabel(sym)}"]`)
+  }
+
+  // Emit one subgraph per non-root workspaceRel
+  for (const [key, syms] of byWorkspace) {
+    if (key === ROOT) continue
+    const displayName = ir.meta.workspaces?.[key]?.displayName ?? key
+    const sgId = `ws_${key.replace(/[^\w]/g, '_')}`
+    lines.push(`  subgraph ${sgId}["${sanitizeLabel(displayName)}"]`)
+    for (const sym of syms) {
+      lines.push(`    ${safeId(sym.id)}["${nodeLabel(sym)}"]`)
     }
-  } else {
-    for (const sym of ir.symbols) {
-      lines.push(`  ${safeId(sym.id)}["${nodeLabel(sym)}"]`)
-    }
+    lines.push(`  end`)
   }
 
   for (const rel of ir.relationships) {
