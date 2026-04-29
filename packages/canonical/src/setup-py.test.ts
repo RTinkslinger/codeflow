@@ -55,4 +55,25 @@ describe('detectWorkspaces — setup.py', () => {
     expect(w).toBeDefined()
     expect(w?.manifest).toBe('pyproject')
   })
+
+  it('surfaces SETUP_PY_NAME_UNRESOLVED on detectionWarnings when name= is a variable', async () => {
+    _resetMemoCache()
+    const root = path.resolve(__dirname, '../tests/fixtures/ws-py-setup-unresolved')
+    const ws = await detectWorkspaces(root, 'py')
+    expect(ws.length).toBe(1)
+    const w = ws[0]!
+    expect(w.manifest).toBe('setup.py')
+    // displayName fell back to relative path (root → '.')
+    expect(w.displayName).toBe('.')
+    expect(w.detectionWarnings).toBeDefined()
+    expect(w.detectionWarnings![0]!.code).toBe('SETUP_PY_NAME_UNRESOLVED')
+    expect(w.detectionWarnings![0]!.message).toContain('setup.py')
+  })
+
+  it('does not set detectionWarnings when name= extracts cleanly', async () => {
+    _resetMemoCache()
+    const root = path.resolve(__dirname, '../tests/fixtures/ws-py-setup-only')
+    const ws = await detectWorkspaces(root, 'py')
+    expect(ws[0]!.detectionWarnings).toBeUndefined()
+  })
 })

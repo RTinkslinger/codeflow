@@ -1,6 +1,11 @@
 export type WorkspaceManifest = 'pnpm' | 'pkgjson' | 'pyproject' | 'setup.py' | 'fs-fallback'
 export type WorkspaceLanguage = 'ts' | 'py'
 
+export interface DetectionWarning {
+  code: 'SETUP_PY_NAME_UNRESOLVED'
+  message: string
+}
+
 export interface Workspace {
   /** Canonical repo root — same for all workspaces in a single detection result */
   rootPath: string
@@ -17,6 +22,8 @@ export interface Workspace {
   isLeaf: boolean
   /** Display label for renderers (from package.json `name`, pyproject `[project].name`, setup.py `name=`) */
   displayName: string
+  /** Non-fatal warnings discovered at detection time (e.g., setup.py name= not statically extractable) */
+  detectionWarnings?: DetectionWarning[]
 }
 
 export interface WorkspaceErrorInfo {

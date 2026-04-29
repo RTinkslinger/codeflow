@@ -120,10 +120,17 @@ export class ScipPythonExtractor implements Extractor {
       relationships: reRooted.flatMap(ir => ir.relationships),
     }
 
+    const detectionWarningsAsErrors = workspaces.flatMap(w =>
+      (w.detectionWarnings ?? []).map(dw => ({
+        workspace: w,
+        error: { code: dw.code, message: dw.message },
+      })),
+    )
+
     return {
       ir: concatenated,
       durationMs: Date.now() - start,
-      workspaceErrors: errors,
+      workspaceErrors: [...errors, ...detectionWarningsAsErrors],
     }
   }
 

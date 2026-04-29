@@ -1,7 +1,7 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { canonicalizePath, posixRelative } from './canonicalizer.js'
-import type { Workspace, WorkspaceLanguage } from './workspace-types.js'
+import type { Workspace, WorkspaceLanguage, DetectionWarning } from './workspace-types.js'
 
 const memoCache = new Map<string, { mtimeKey: string; workspaces: Workspace[] }>()
 
@@ -147,13 +147,21 @@ async function buildPyWorkspaceFromSetupPy(
   const canonicalWsPath = canonicalizePath(workspacePath)
   const setupPath = path.join(canonicalWsPath, 'setup.py')
   let displayName = posixRelative(rootPath, canonicalWsPath) || '.'
+  let detectionWarnings: DetectionWarning[] | undefined
   try {
     const content = await fs.readFile(setupPath, 'utf-8')
     const { extractSetupPyName } = await import('./extract-setup-py-name.js')
-    const { name } = extractSetupPyName(content)
-    if (name) displayName = name
+    const result = extractSetupPyName(content)
+    if (result.name) {
+      displayName = result.name
+    } else if (result.warning) {
+      detectionWarnings = [{
+        code: result.warning,
+        message: `setup.py at ${setupPath}: name= could not be statically extracted; using relative path as displayName`,
+      }]
+    }
   } catch {
-    // keep displayName fallback
+    // unreadable file — silent fallback to posixRelative
   }
   return {
     rootPath,
@@ -164,6 +172,7 @@ async function buildPyWorkspaceFromSetupPy(
     configPath: setupPath,
     isLeaf: true,
     displayName,
+    ...(detectionWarnings ? { detectionWarnings } : {}),
   }
 }
 
