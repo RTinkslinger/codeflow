@@ -6,3 +6,4 @@ export type { Workspace, WorkspaceManifest, WorkspaceLanguage, WorkspaceErrorInf
 export { detectWorkspaces, _resetMemoCache } from './detect-workspaces.js'
 export { reRootIR } from './re-root-ir.js'
 export { resolveCanonicalRoot } from './canonical-root.js'
+export { stitchCrossWorkspaceEdges } from './cross-workspace-stitch.js'

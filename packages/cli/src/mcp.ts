@@ -6,7 +6,7 @@ import { ScipPythonExtractor } from '@codeflow/extractor-scip-python'
 import { renderMermaid } from '@codeflow/renderer-mermaid'
 import { PreviewServer, WSBroadcaster, FileWatcher } from '@codeflow/preview'
 import { mergeIRs, createError, computeDiff } from '@codeflow/core'
-import { canonicalMerge, resolveCanonicalRoot } from '@codeflow/canonical'
+import { canonicalMerge, resolveCanonicalRoot, stitchCrossWorkspaceEdges } from '@codeflow/canonical'
 import { LaneStateMachine, derivePreviewStatus } from './state.js'
 import type { PreviewStatus } from './state.js'
 import type { IR } from '@codeflow/core'
@@ -138,7 +138,8 @@ export class CodeflowMCP {
       if (irs.some(ir => ir.symbols.length > 0)) {
         const merged = mergeIRs(irs)
         const { symbols, relationships } = canonicalMerge(merged.symbols, record.path, merged.relationships)
-        const canonical = { ...merged, symbols, relationships }
+        const stitched = stitchCrossWorkspaceEdges({ ...merged, symbols, relationships })
+        const canonical = stitched
         const diff = computeDiff(record.verifiedIR, canonical)
         canonical.meta.diff = diff
         record.verifiedIR = canonical
