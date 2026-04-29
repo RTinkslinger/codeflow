@@ -118,3 +118,64 @@ Project root and plugin root collide in this repo. Any file CC interprets as bot
 
 ### Lesson
 **When source repo == plugin root, prefer plugin.json inline over .mcp.json at root.** The `.mcp.json` at root is fine for end-users (it lives only in the plugin cache where CLAUDE_PLUGIN_ROOT resolves), but in dev it gets double-parsed. `plugin.json`'s `mcpServers` field avoids the collision entirely.
+
+---
+
+## 2026-04-30 — M2 monorepo extractor (v0.1.13 → v0.1.16): four big lessons
+
+Five-day arc executing `docs/upp/plans/2026-04-29-codeflow-monorepo-extractor.md`. M1 + M2 shipped. M3 deferred.
+
+### Lesson 1 — "Files-only soup" was a load-bearing-invariant bug, masked for months
+
+**Symptom:** v0.1.15 verified-mode graph on the codeflow repo showed 115 file nodes + 1199 dense edges and zero function/class/method Definitions. User flagged "ultra infinite dense soup."
+
+**Root cause:** `canonicalMerge` in `packages/canonical/src/merger.ts` keyed `byPath` on canonicalized absPath WITHOUT checking symbol kind. Two SCIP Definitions in the same file (a function and the file-symbol added by M1) both had the same absPath → the merger collapsed them. Every Definition got remapped to the file-symbol id; the byNonFileId of distinct Definitions never existed.
+
+**Why nobody caught it before now:** M1 introduced file-symbols (Task 3). Before M1, scip extractors emitted only Definitions, all with the same `kind: 'function'`. Two functions sharing absPath was impossible because each function had a distinct SCIP id. Post-M1, file-symbols share absPath with their Definitions → collision triggers the over-broad dedup.
+
+**Fix in v0.1.16:** scope `byPath` to `FILE_LEVEL_KINDS = {file, module}` only. Other kinds dedupe by id. Two file-level symbols for the same path collapse to one (cross-extractor dedup, the original intent). Function/class/method Definitions are preserved.
+
+**Lesson:** spec invariants like "one file on disk → one node" must specify SCOPE. The original wording ambiguously meant "one file-NODE per file," not "one any-symbol per file." Without that scoping, the implementation collapsed legitimately distinct nodes for years. Whenever a load-bearing invariant changes shape (here: M1 introduced a new symbol kind that participates in path-keyed dedup), re-audit the invariant's scope.
+
+### Lesson 2 — Synthetic fixtures hide pnpm-symlink reality
+
+**Symptom:** dogfood test on real codeflow repo (10 packages, pnpm-symlinked deps) returned 0 cross-workspace edges despite the 3-pkg synthetic fixture passing every cross-edge test.
+
+**Root cause:** the 3-pkg fixture used tsconfig `paths` aliases (`"pkg-a": ["../pkg-a/src/index.ts"]`). With paths aliases, scip-typescript indexes pkg-b's import of pkg-a directly to pkg-a's source files — so the SCIP symbol id of pkg-b's reference equals pkg-a's Definition id. Phase 0 verified this case.
+
+But real pnpm workspaces use `node_modules/@codeflow/core` symlinks, not paths aliases. scip-typescript follows the symlink to the BUILT dist (`dist/index.d.ts`), and emits the reference with `dist/...` in the descriptor, while pkg-a's Definition uses `src/...`. Same package, different file path → different SCIP id → the merger's byId table has no match → relationship stays as an unstitched external reference.
+
+**Fix:** added `cross-workspace-stitch.ts` that runs post-merge. Matches relationship `to` field to internal file-symbol via `(pkgName, moduleKey)` where moduleKey strips `src|dist` prefix and `.ts|.d.ts` extension. Empirical SCIP samples documented inline in the source.
+
+**Lesson:** Phase 0's symbol-stability claim was scoped to one pattern (paths aliases) but the spec implicitly assumed it generalized. **Always test verification fixtures against the dominant real-world dependency-resolution pattern**, not a simplified one. For TS monorepos, that's pnpm/yarn/npm symlinks — workspaces:* deps with `link:` resolution.
+
+### Lesson 3 — Subagent execution surfaces real bugs only when given REAL inputs
+
+The dogfood test (Task 26) was almost dropped because the synthetic fixture tests all passed. Running it against the actual codeflow repo found:
+- The cross-workspace edge gap (Lesson 2)
+- chokidar EMFILE on node_modules (5934 errors)
+- Mermaid maxTextSize cap on real-monorepo IR sizes
+- The canonicalMerge collapse bug (Lesson 1)
+
+None of these surfaced in synthetic fixtures because the fixtures were too small AND too clean. The dogfood test's value isn't its assertions — it's that running on REAL CODE forces the system through cases the design never imagined.
+
+**Lesson:** plan an "empirical ground-truth gate" between every milestone, not just at the end. Each gate should run on the largest, gnarliest real input available, even if its assertions are loose. The point is to make the system fail in honest ways before users do.
+
+### Lesson 4 — Plan deviations stack up; fold into TRACES regularly
+
+Five real plan deviations during execution:
+1. Task 18 ran before Task 17 (sequencing dep)
+2. Task 9.5 inserted (user-flagged readability)
+3. Task 26.5 added (cross-workspace stitcher, dogfood failure)
+4. Task 26.6 added (FileWatcher EMFILE)
+5. v0.1.16 merger fix (NOT in plan)
+
+None of these are bad — they're appropriate responses to real findings. But the plan file at `docs/upp/plans/2026-04-29-codeflow-monorepo-extractor.md` doesn't reflect them. Future readers will see "Task 27" and miss that 26.5/26.6 happened in between, that v0.1.16 ships work that's not in any plan task.
+
+**Lesson:** when plan execution deviates (and it will), record the deviation in TRACES.md immediately. The plan file becomes intent-of-the-day; TRACES.md is the executed-reality log. Keep them honest with each other.
+
+### Stats
+- 7 versioned releases in this arc (v0.1.10 → v0.1.16)
+- ~35 production commits
+- 170/173 tests passing; 2 unrelated timing flakes; 1 env-gated dogfood
+- 3 days from spec to M2-shipped (with brainstorming + 2 eng-lead review rounds)
