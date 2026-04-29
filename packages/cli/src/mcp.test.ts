@@ -1,4 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import os from 'node:os'
+import fs from 'node:fs'
+import path from 'node:path'
 import { CodeflowMCP } from './mcp.js'
 import { loadFixture } from '@codeflow/test-utils'
 
@@ -43,8 +46,20 @@ describe('CodeflowMCP', () => {
   })
 
   it('enforces preview cap of 8', async () => {
-    const fixturePath = loadFixture('pure-ts')
-    for (let i = 0; i < 8; i++) await mcp.startPreview({ path: fixturePath + `/sub${i}` })
-    await expect(mcp.startPreview({ path: fixturePath + '/sub9' })).rejects.toThrow('preview cap')
+    // Each dir must have a distinct canonical root — use real temp dirs outside any git/workspace
+    const dirs = Array.from({ length: 8 }, () =>
+      fs.mkdtempSync(path.join(os.tmpdir(), 'codeflow-cap-'))
+    )
+    try {
+      for (const d of dirs) await mcp.startPreview({ path: d })
+      const ninth = fs.mkdtempSync(path.join(os.tmpdir(), 'codeflow-cap-'))
+      try {
+        await expect(mcp.startPreview({ path: ninth })).rejects.toThrow('preview cap')
+      } finally {
+        fs.rmSync(ninth, { recursive: true, force: true })
+      }
+    } finally {
+      for (const d of dirs) fs.rmSync(d, { recursive: true, force: true })
+    }
   })
 })

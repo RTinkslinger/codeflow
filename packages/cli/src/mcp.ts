@@ -6,7 +6,7 @@ import { ScipPythonExtractor } from '@codeflow/extractor-scip-python'
 import { renderMermaid } from '@codeflow/renderer-mermaid'
 import { PreviewServer, WSBroadcaster, FileWatcher } from '@codeflow/preview'
 import { mergeIRs, createError, computeDiff } from '@codeflow/core'
-import { canonicalMerge } from '@codeflow/canonical'
+import { canonicalMerge, resolveCanonicalRoot } from '@codeflow/canonical'
 import { LaneStateMachine, derivePreviewStatus } from './state.js'
 import type { PreviewStatus } from './state.js'
 import type { IR } from '@codeflow/core'
@@ -17,6 +17,7 @@ const IDLE_TIMEOUT_MS = 600_000
 interface PreviewRecord {
   previewId: string
   path: string
+  canonicalRoot: string
   url: string
   port: number
   server: PreviewServer
@@ -40,9 +41,12 @@ export class CodeflowMCP {
   private scipPyExtractor = new ScipPythonExtractor()
 
   async startPreview(opts: { path: string; verified?: boolean }): Promise<{ url: string; previewId: string; status: PreviewStatus }> {
-    // Return existing preview for same path (v1 share-per-path)
+    // Return existing preview for same canonical workspace root (v1 share-per-path, eng-lead I7)
+    const canonicalRoot = await resolveCanonicalRoot(opts.path)
     for (const p of this.previews.values()) {
-      if (p.path === opts.path) return { url: p.url, previewId: p.previewId, status: derivePreviewStatus([p.fastLane.state, p.verifiedLane.state]) }
+      if (p.canonicalRoot === canonicalRoot) {
+        return { url: p.url, previewId: p.previewId, status: derivePreviewStatus([p.fastLane.state, p.verifiedLane.state]) }
+      }
     }
 
     if (this.previews.size >= PREVIEW_CAP) {
@@ -58,7 +62,7 @@ export class CodeflowMCP {
     const verifiedLane = new LaneStateMachine()
 
     const record: PreviewRecord = {
-      previewId, path: opts.path, url, port, server, broadcaster, watcher,
+      previewId, path: opts.path, canonicalRoot, url, port, server, broadcaster, watcher,
       fastLane, verifiedLane, fastIR: null, verifiedIR: null,
       lastClientSeen: Date.now(), lastGetIrSeen: Date.now(),
     }
