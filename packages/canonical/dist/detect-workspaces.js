@@ -1,0 +1,223 @@
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import { canonicalizePath, posixRelative } from './canonicalizer.js';
+const memoCache = new Map();
+export function _resetMemoCache() {
+    memoCache.clear();
+}
+async function manifestMtimeKey(rootPath) {
+    const candidates = ['pnpm-workspace.yaml', 'package.json', 'pyproject.toml'];
+    const stats = [];
+    for (const c of candidates) {
+        try {
+            const stat = await fs.stat(path.join(rootPath, c));
+            stats.push(`${c}:${stat.mtimeMs}`);
+        }
+        catch { /* not present */ }
+    }
+    return stats.join('|');
+}
+export async function detectWorkspaces(rootPath, language) {
+    const canonicalRoot = canonicalizePath(rootPath);
+    const key = `${canonicalRoot}::${language}`;
+    const mtimeKey = await manifestMtimeKey(canonicalRoot);
+    const cached = memoCache.get(key);
+    if (cached && cached.mtimeKey === mtimeKey)
+        return cached.workspaces;
+    const workspaces = language === 'ts'
+        ? await detectTsWorkspaces(canonicalRoot)
+        : await detectPyWorkspaces(canonicalRoot);
+    memoCache.set(key, { mtimeKey, workspaces });
+    return workspaces;
+}
+async function detectTsWorkspaces(rootPath) {
+    // Priority 1: pnpm-workspace.yaml
+    const pnpm = await tryDetectPnpm(rootPath);
+    if (pnpm && pnpm.length > 0)
+        return computeIsLeaf(pnpm);
+    // Priority 2: package.json#workspaces
+    const pkgjson = await tryDetectPackageJsonWorkspaces(rootPath);
+    if (pkgjson && pkgjson.length > 0)
+        return computeIsLeaf(pkgjson);
+    // Priority 3: fs-walk
+    const walked = await fsWalkForTsconfig(rootPath);
+    if (walked.length > 0)
+        return computeIsLeaf(walked);
+    // Priority 4 (single-path fallback)
+    return [singlePathFallback(rootPath, 'ts')];
+}
+async function computeIsLeaf(workspaces) {
+    // A workspace is referenced if any other workspace's tsconfig references[].path
+    // resolves (canonically) to its workspacePath.
+    const referenced = new Set();
+    for (const w of workspaces) {
+        try {
+            const tsconfig = JSON.parse(await fs.readFile(w.configPath, 'utf-8'));
+            for (const ref of tsconfig.references ?? []) {
+                const refAbs = canonicalizePath(path.resolve(w.workspacePath, ref.path));
+                referenced.add(refAbs);
+            }
+        }
+        catch { /* malformed/missing tsconfig — skip; isLeaf stays true */ }
+    }
+    return workspaces.map(w => ({ ...w, isLeaf: !referenced.has(w.workspacePath) }));
+}
+async function fsWalkForTsconfig(rootPath) {
+    const fastGlob = (await import('fast-glob')).default;
+    // Use the chokidar-aligned ignore set per spec §11
+    const ignore = ['**/node_modules/**', '**/.git/**', '**/.venv/**', '**/dist/**', '**/build/**', '**/target/**', '**/.next/**', '**/.parcel-cache/**'];
+    const tsconfigs = await fastGlob('**/tsconfig.json', {
+        cwd: rootPath,
+        ignore,
+        absolute: true,
+        deep: 5,
+        onlyFiles: true,
+    });
+    if (tsconfigs.length === 0)
+        return [];
+    return Promise.all(tsconfigs.map(t => buildTsWorkspace(rootPath, path.dirname(t), 'fs-fallback')));
+}
+async function tryDetectPnpm(rootPath) {
+    const ymlPath = path.join(rootPath, 'pnpm-workspace.yaml');
+    if (!await exists(ymlPath))
+        return null;
+    // Use @pnpm/find-workspace-packages — handles glob expansion, exclusions,
+    // pnpm v9 catalog form, and package.json `{packages, nohoist}` variants.
+    const { findWorkspacePackages } = await import('@pnpm/find-workspace-packages');
+    const projects = await findWorkspacePackages(rootPath);
+    // Skip the root project (its dir === rootPath)
+    return Promise.all(projects
+        .filter(p => canonicalizePath(p.dir) !== rootPath)
+        .map(p => buildTsWorkspace(rootPath, p.dir, 'pnpm')));
+}
+async function tryDetectPackageJsonWorkspaces(rootPath) {
+    const pkgPath = path.join(rootPath, 'package.json');
+    if (!await exists(pkgPath))
+        return null;
+    const pkg = JSON.parse(await fs.readFile(pkgPath, 'utf-8'));
+    const patterns = Array.isArray(pkg.workspaces) ? pkg.workspaces : pkg.workspaces?.packages;
+    if (!patterns || patterns.length === 0)
+        return null;
+    const fastGlob = (await import('fast-glob')).default;
+    const dirs = await fastGlob(patterns, {
+        cwd: rootPath,
+        onlyDirectories: true,
+        absolute: true,
+    });
+    return Promise.all(dirs.map(d => buildTsWorkspace(rootPath, d, 'pkgjson')));
+}
+async function buildTsWorkspace(rootPath, workspacePath, manifest) {
+    const canonicalWsPath = canonicalizePath(workspacePath);
+    const tsconfigPath = path.join(canonicalWsPath, 'tsconfig.json');
+    const pkgPath = path.join(canonicalWsPath, 'package.json');
+    let displayName;
+    try {
+        const pkg = JSON.parse(await fs.readFile(pkgPath, 'utf-8'));
+        displayName = pkg.name ?? posixRelative(rootPath, canonicalWsPath);
+    }
+    catch {
+        displayName = posixRelative(rootPath, canonicalWsPath);
+    }
+    return {
+        rootPath,
+        workspacePath: canonicalWsPath,
+        workspaceRel: posixRelative(rootPath, canonicalWsPath),
+        manifest,
+        language: 'ts',
+        configPath: tsconfigPath,
+        isLeaf: true, // computed properly in Task 12
+        displayName,
+    };
+}
+async function detectPyWorkspaces(rootPath) {
+    const tomlPath = path.join(rootPath, 'pyproject.toml');
+    if (await exists(tomlPath)) {
+        const tomlContent = await fs.readFile(tomlPath, 'utf-8');
+        const toml = (await import('@iarna/toml')).default.parse(tomlContent);
+        const tables = [];
+        if (toml.tool?.uv?.workspace?.members)
+            tables.push(toml.tool.uv.workspace.members);
+        if (toml.tool?.pdm?.workspace?.members)
+            tables.push(toml.tool.pdm.workspace.members);
+        if (toml.tool?.rye?.workspaces)
+            tables.push(toml.tool.rye.workspaces);
+        if (tables.length > 0) {
+            const fastGlob = (await import('fast-glob')).default;
+            const patterns = tables.flat();
+            const dirs = await fastGlob(patterns, {
+                cwd: rootPath,
+                onlyDirectories: true,
+                absolute: true,
+            });
+            // Filter to dirs that actually contain pyproject.toml
+            const valid = [];
+            for (const d of dirs) {
+                if (await exists(path.join(d, 'pyproject.toml')))
+                    valid.push(d);
+            }
+            return Promise.all(valid.map(d => buildPyWorkspace(rootPath, d, 'pyproject')));
+        }
+        // Single pyproject.toml at root
+        return [await buildPyWorkspace(rootPath, rootPath, 'pyproject')];
+    }
+    // fs-walk
+    const fastGlob = (await import('fast-glob')).default;
+    const ignore = ['**/node_modules/**', '**/.git/**', '**/.venv/**', '**/__pycache__/**', '**/dist/**', '**/build/**'];
+    const found = await fastGlob('**/pyproject.toml', {
+        cwd: rootPath,
+        ignore,
+        absolute: true,
+        deep: 5,
+        onlyFiles: true,
+    });
+    if (found.length > 0) {
+        return Promise.all(found.map(f => buildPyWorkspace(rootPath, path.dirname(f), 'fs-fallback')));
+    }
+    return [singlePathFallback(rootPath, 'py')];
+}
+async function buildPyWorkspace(rootPath, workspacePath, manifest) {
+    const canonicalWsPath = canonicalizePath(workspacePath);
+    const tomlPath = path.join(canonicalWsPath, 'pyproject.toml');
+    let displayName;
+    try {
+        const tomlContent = await fs.readFile(tomlPath, 'utf-8');
+        const toml = (await import('@iarna/toml')).default.parse(tomlContent);
+        displayName = toml.project?.name ?? posixRelative(rootPath, canonicalWsPath);
+    }
+    catch {
+        displayName = posixRelative(rootPath, canonicalWsPath);
+    }
+    return {
+        rootPath,
+        workspacePath: canonicalWsPath,
+        workspaceRel: posixRelative(rootPath, canonicalWsPath),
+        manifest,
+        language: 'py',
+        configPath: tomlPath,
+        isLeaf: true,
+        displayName,
+    };
+}
+function singlePathFallback(rootPath, language) {
+    const cfg = language === 'ts' ? 'tsconfig.json' : 'pyproject.toml';
+    return {
+        rootPath,
+        workspacePath: rootPath,
+        workspaceRel: '.',
+        manifest: 'fs-fallback',
+        language,
+        configPath: path.join(rootPath, cfg),
+        isLeaf: true,
+        displayName: path.basename(rootPath),
+    };
+}
+async function exists(p) {
+    try {
+        await fs.access(p);
+        return true;
+    }
+    catch {
+        return false;
+    }
+}
+//# sourceMappingURL=detect-workspaces.js.map
