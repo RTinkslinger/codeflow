@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@codeflow/core": "workspace:*",
+    "@pnpm/find-workspace-packages": "^6.0.9",
     "fast-check": "^3.23.2"
   }
 }
