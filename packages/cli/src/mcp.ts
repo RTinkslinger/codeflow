@@ -143,7 +143,23 @@ export class CodeflowMCP {
         canonical.meta.diff = diff
         record.verifiedIR = canonical
         const mermaid = renderMermaid(canonical)
-        record.broadcaster.broadcast({ type: 'verified_ready', mermaid, badge: '● verified', diff })
+
+        const allWorkspaceErrors: any[] = []
+        if (tsResult.status === 'fulfilled') allWorkspaceErrors.push(...(tsResult.value.workspaceErrors ?? []))
+        if (pyResult.status === 'fulfilled') allWorkspaceErrors.push(...(pyResult.value.workspaceErrors ?? []))
+        const workspaceWarnings = allWorkspaceErrors.map((e: any) => ({
+          workspacePath: e.workspace?.workspacePath ?? 'unknown',
+          code: 'SOURCE_PARSE_FAILED',
+          diagId: crypto.randomUUID().slice(0, 8),
+        }))
+
+        record.broadcaster.broadcast({
+          type: 'verified_ready',
+          mermaid,
+          badge: workspaceWarnings.length > 0 ? `● verified (${workspaceWarnings.length} partial)` : '● verified',
+          diff,
+          ...(workspaceWarnings.length > 0 ? { workspaceWarnings } : {}),
+        })
         record.verifiedLane.onOk()
       } else {
         record.verifiedLane.onFail()

@@ -3,6 +3,8 @@ import type http from 'node:http'
 
 export interface BroadcastMessage {
   type: string
+  /** Present on verified_ready when one or more per-workspace extractions failed (partial success). */
+  workspaceWarnings?: Array<{ workspacePath: string; code: string; diagId: string }>
   [key: string]: unknown
 }
 
