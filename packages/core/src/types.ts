@@ -36,6 +36,7 @@ export interface CFSymbol {
   confidence: Confidence
   parent?: string
   viz?: Viz
+  workspaceRel?: string   // (Task 18) — set by reRootIR for monorepo workspace identification
 }
 
 export interface Relationship {
@@ -56,6 +57,7 @@ export interface IRMeta {
   partial?: boolean
   errors?: unknown[]
   diff?: { added: Relationship[]; removed: Relationship[]; upgraded: Relationship[] }
+  workspaces?: Record<string, { displayName: string; manifest: 'pnpm' | 'pkgjson' | 'pyproject' | 'setup.py' | 'fs-fallback' }>   // (Task 18)
 }
 
 export interface IR {

@@ -26,6 +26,7 @@ export const SymbolSchema = z.object({
   confidence: z.enum(['verified', 'inferred']),
   parent: z.string().optional(),
   viz: VizSchema.optional(),
+  workspaceRel: z.string().optional(),
 }).strict()
 
 export const RelationshipSchema = z.object({
@@ -62,6 +63,13 @@ export const IRSchema = z.object({
       removed: z.array(RelationshipSchema),
       upgraded: z.array(RelationshipSchema),
     }).strict().optional(),
+    workspaces: z.record(
+      z.string(),
+      z.object({
+        displayName: z.string(),
+        manifest: z.enum(['pnpm', 'pkgjson', 'pyproject', 'setup.py', 'fs-fallback']),
+      }).strict(),
+    ).optional(),
   }).strict(),
   documents: z.array(DocumentSchema),
   symbols: z.array(SymbolSchema),
