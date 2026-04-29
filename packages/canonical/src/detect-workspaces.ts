@@ -12,15 +12,33 @@ export async function detectWorkspaces(rootPath: string, language: WorkspaceLang
 async function detectTsWorkspaces(rootPath: string): Promise<Workspace[]> {
   // Priority 1: pnpm-workspace.yaml
   const pnpm = await tryDetectPnpm(rootPath)
-  if (pnpm && pnpm.length > 0) return pnpm
+  if (pnpm && pnpm.length > 0) return computeIsLeaf(pnpm)
   // Priority 2: package.json#workspaces
   const pkgjson = await tryDetectPackageJsonWorkspaces(rootPath)
-  if (pkgjson && pkgjson.length > 0) return pkgjson
+  if (pkgjson && pkgjson.length > 0) return computeIsLeaf(pkgjson)
   // Priority 3: fs-walk
   const walked = await fsWalkForTsconfig(rootPath)
-  if (walked.length > 0) return walked
+  if (walked.length > 0) return computeIsLeaf(walked)
   // Priority 4 (single-path fallback)
   return [singlePathFallback(rootPath, 'ts')]
+}
+
+async function computeIsLeaf(workspaces: Workspace[]): Promise<Workspace[]> {
+  // A workspace is referenced if any other workspace's tsconfig references[].path
+  // resolves (canonically) to its workspacePath.
+  const referenced = new Set<string>()
+  for (const w of workspaces) {
+    try {
+      const tsconfig = JSON.parse(await fs.readFile(w.configPath, 'utf-8')) as {
+        references?: Array<{ path: string }>
+      }
+      for (const ref of tsconfig.references ?? []) {
+        const refAbs = canonicalizePath(path.resolve(w.workspacePath, ref.path))
+        referenced.add(refAbs)
+      }
+    } catch { /* malformed/missing tsconfig — skip; isLeaf stays true */ }
+  }
+  return workspaces.map(w => ({ ...w, isLeaf: !referenced.has(w.workspacePath) }))
 }
 
 async function fsWalkForTsconfig(rootPath: string): Promise<Workspace[]> {

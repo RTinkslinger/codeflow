@@ -41,4 +41,15 @@ describe('detectWorkspaces — TS', () => {
     // Must NOT include node_modules entries
     expect(ws.every(w => !w.workspaceRel.includes('node_modules'))).toBe(true)
   })
+
+  it('computes isLeaf via tsconfig references graph', async () => {
+    const root = path.resolve(__dirname, '../tests/fixtures/ws-references')
+    const ws = await detectWorkspaces(root, 'ts')
+    const shared = ws.find(w => w.workspaceRel === 'packages/shared')!
+    const web = ws.find(w => w.workspaceRel === 'packages/web')!
+    // shared is REFERENCED BY web → not a leaf
+    expect(shared.isLeaf).toBe(false)
+    // web references shared but nothing references web → leaf
+    expect(web.isLeaf).toBe(true)
+  }, 30_000)
 })
