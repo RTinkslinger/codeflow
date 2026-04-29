@@ -16,6 +16,14 @@ export class FileWatcher {
       ignoreInitial: true,
       awaitWriteFinish: { stabilityThreshold: 150, pollInterval: 50 },
       usePolling: false,
+      // pnpm workspaces use symlinks heavily; following them descends into
+      // node_modules content already covered by direct package paths AND
+      // explodes file-descriptor count on real monorepos. Off by default
+      // in chokidar; setting explicitly to document intent.
+      followSymlinks: false,
+      // Cap recursion depth; defends against EMFILE on repos with deep
+      // dist/cache trees that fall outside the IGNORED globs.
+      depth: 10,
     })
     let debounceTimer: NodeJS.Timeout | null = null
     const trigger = () => {

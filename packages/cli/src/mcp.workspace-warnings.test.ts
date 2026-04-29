@@ -41,7 +41,7 @@ describe.skipIf(!HAS_SCIP_TS)('mcp workspaceWarnings broadcast', () => {
       await new Promise(r => setTimeout(r, 500))
     }
 
-    const verified = broadcasts.findLast((m: any) => m.type === 'verified_ready')
+    const verified = [...broadcasts].reverse().find((m: any) => m.type === 'verified_ready')
     expect(verified, 'verified_ready broadcast not received within 90s').toBeDefined()
     expect(verified.workspaceWarnings).toBeDefined()
     expect(verified.workspaceWarnings.length).toBeGreaterThan(0)
