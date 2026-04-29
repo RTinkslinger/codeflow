@@ -49,7 +49,7 @@ export const PREVIEW_HTML = `<!DOCTYPE html>
 <body>
   <div id="status"><span id="dot"></span><span id="label">connecting...</span></div>
   <div id="graph"><div class="mermaid" id="diagram"></div></div>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
   <script>
     mermaid.initialize({
       startOnLoad: false,
