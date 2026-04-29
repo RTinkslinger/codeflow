@@ -16,9 +16,26 @@ async function detectTsWorkspaces(rootPath: string): Promise<Workspace[]> {
   // Priority 2: package.json#workspaces
   const pkgjson = await tryDetectPackageJsonWorkspaces(rootPath)
   if (pkgjson && pkgjson.length > 0) return pkgjson
-  // Priority 3 (fs-walk) added in Task 11
+  // Priority 3: fs-walk
+  const walked = await fsWalkForTsconfig(rootPath)
+  if (walked.length > 0) return walked
   // Priority 4 (single-path fallback)
   return [singlePathFallback(rootPath, 'ts')]
+}
+
+async function fsWalkForTsconfig(rootPath: string): Promise<Workspace[]> {
+  const fastGlob = (await import('fast-glob')).default
+  // Use the chokidar-aligned ignore set per spec §11
+  const ignore = ['**/node_modules/**', '**/.git/**', '**/.venv/**', '**/dist/**', '**/build/**', '**/target/**', '**/.next/**', '**/.parcel-cache/**']
+  const tsconfigs = await fastGlob('**/tsconfig.json', {
+    cwd: rootPath,
+    ignore,
+    absolute: true,
+    deep: 5,
+    onlyFiles: true,
+  })
+  if (tsconfigs.length === 0) return []
+  return Promise.all(tsconfigs.map(t => buildTsWorkspace(rootPath, path.dirname(t), 'fs-fallback')))
 }
 
 async function tryDetectPnpm(rootPath: string): Promise<Workspace[] | null> {

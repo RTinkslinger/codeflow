@@ -32,4 +32,13 @@ describe('detectWorkspaces — TS', () => {
     expect(ws.length).toBe(1)
     expect(ws[0]!.manifest).toBe('fs-fallback')
   })
+
+  it('falls back to filesystem walk when no manifest', async () => {
+    const root = path.resolve(__dirname, '../tests/fixtures/ws-fswalk')
+    const ws = await detectWorkspaces(root, 'ts')
+    expect(ws.length).toBe(3)   // apps/web, apps/api, libs/shared
+    expect(ws.every(w => w.manifest === 'fs-fallback')).toBe(true)
+    // Must NOT include node_modules entries
+    expect(ws.every(w => !w.workspaceRel.includes('node_modules'))).toBe(true)
+  })
 })
