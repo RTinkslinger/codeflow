@@ -1,0 +1,1 @@
+{"version":3,"file":"detect-workspaces.d.ts","sourceRoot":"","sources":["../src/detect-workspaces.ts"],"names":[],"mappings":"AAGA,OAAO,KAAK,EAAE,SAAS,EAAE,iBAAiB,EAAE,MAAM,sBAAsB,CAAA;AAIxE,wBAAgB,eAAe,IAAI,IAAI,CAEtC;AAcD,wBAAsB,gBAAgB,CAAC,QAAQ,EAAE,MAAM,EAAE,QAAQ,EAAE,iBAAiB,GAAG,OAAO,CAAC,SAAS,EAAE,CAAC,CAW1G"}
