@@ -70,7 +70,9 @@ function parseSCIPOutput(scipFile: string, root: string, extractorName: string, 
 
   const symbols: CFSymbol[] = []
   const relationships: Relationship[] = []
+  const documents: { relPath: string; absPath: string; language: 'ts' }[] = []
   const seenSymbolIds = new Set<string>()
+  const fileSymbolsByPath = new Map<string, CFSymbol>()  // canonAbsPath → file-symbol
 
   const docs = scip['documents'] as Array<Record<string, unknown>> | undefined ?? []
   for (const doc of docs) {
@@ -81,6 +83,27 @@ function parseSCIPOutput(scipFile: string, root: string, extractorName: string, 
     let canonRel: string
     try { canonRel = posixRelative(root, canonAbs) }
     catch { continue }
+
+    documents.push({ relPath: canonRel, absPath: canonAbs, language: 'ts' })
+
+    // Synthesize a file-symbol for this document — used as the `from` endpoint
+    // of relationships emitted in Task 4. ID is deterministic and content-free
+    // (file::<absPath>) so the merger's byId remap can canonicalize it.
+    const fileSymId = `file::${canonAbs}`
+    if (!fileSymbolsByPath.has(canonAbs)) {
+      const fileSym: CFSymbol = {
+        id: fileSymId,
+        kind: 'file',
+        name: path.basename(canonAbs),
+        absPath: canonAbs,
+        relPath: canonRel,
+        language: 'ts',
+        origin: 'extractor',
+        confidence: 'verified',
+      }
+      fileSymbolsByPath.set(canonAbs, fileSym)
+      symbols.push(fileSym)
+    }
 
     const occurrences = doc['occurrences'] as Array<Record<string, unknown>> | undefined ?? []
     for (const occ of occurrences) {
@@ -97,5 +120,5 @@ function parseSCIPOutput(scipFile: string, root: string, extractorName: string, 
     }
   }
 
-  return { schemaVersion: '1', meta: { extractor: { name: extractorName, version: extractorVersion, invocation } , root }, documents: [], symbols, relationships }
+  return { schemaVersion: '1', meta: { extractor: { name: extractorName, version: extractorVersion, invocation } , root }, documents, symbols, relationships }
 }
