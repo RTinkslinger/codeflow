@@ -108,15 +108,48 @@ function parseSCIPOutput(scipFile: string, root: string, extractorName: string, 
     const occurrences = doc['occurrences'] as Array<Record<string, unknown>> | undefined ?? []
     for (const occ of occurrences) {
       const symId = occ['symbol'] as string | undefined
-      const roles = occ['symbol_roles'] as number | undefined
-      // bit 0 = Definition role in SCIP protobuf
-      if (!symId || !roles || (roles & 1) === 0) continue
-      // SCIP can emit the same Definition occurrence multiple times (re-declarations, overloads).
-      // Dedup by symId — IDs are SCIP symbol strings which are inherently unique per definition.
-      if (seenSymbolIds.has(symId)) continue
-      seenSymbolIds.add(symId)
-      const name = symId.split(':').at(-1) ?? symId
-      symbols.push({ id: symId, kind: 'function', name, absPath: canonAbs, relPath: canonRel, language: 'ts', origin: 'extractor', confidence: 'verified' })
+      const rolesRaw = occ['symbol_roles'] as number | undefined
+      if (!symId) continue
+      const roles = rolesRaw ?? 0   // SCIP emits 0 for plain references — treat undefined as 0
+
+      // Definition role: bit 0 (0x1)
+      if ((roles & 1) !== 0) {
+        // SCIP can emit the same Definition occurrence multiple times (re-declarations, overloads).
+        // Dedup by symId — IDs are SCIP symbol strings which are inherently unique per definition.
+        if (seenSymbolIds.has(symId)) continue
+        seenSymbolIds.add(symId)
+        const name = symId.split(':').at(-1) ?? symId
+        symbols.push({ id: symId, kind: 'function', name, absPath: canonAbs, relPath: canonRel, language: 'ts', origin: 'extractor', confidence: 'verified' })
+        continue
+      }
+
+      // Skip local symbols (intra-document references not interesting for cross-file graph)
+      if (symId.startsWith('local ')) continue
+
+      // Import role: bit 1 (0x2) — defensive branch for scip-python / future scip-typescript versions
+      if ((roles & 2) !== 0) {
+        relationships.push({
+          id: `${fileSymId}::${symId}::imports`,
+          from: fileSymId,
+          to: symId,
+          kind: 'imports',
+          language: 'ts',
+          confidence: 'verified',
+        })
+        continue
+      }
+
+      // Plain reference: roles === 0, non-local symbol — primary path on scip-typescript output
+      if (roles === 0) {
+        relationships.push({
+          id: `${fileSymId}::${symId}::references`,
+          from: fileSymId,
+          to: symId,
+          kind: 'references',
+          language: 'ts',
+          confidence: 'verified',
+        })
+      }
     }
   }
 
