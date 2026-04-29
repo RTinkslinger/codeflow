@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@codeflow/core": "workspace:*",
+    "@iarna/toml": "^2.2.5",
     "@pnpm/find-workspace-packages": "^6.0.9",
     "fast-check": "^3.23.2",
     "fast-glob": "^3.3.3"

@@ -53,3 +53,37 @@ describe('detectWorkspaces — TS', () => {
     expect(web.isLeaf).toBe(true)
   }, 30_000)
 })
+
+describe('detectWorkspaces — Py', () => {
+  it('reads [tool.uv.workspace] members', async () => {
+    const root = path.resolve(__dirname, '../tests/fixtures/ws-py-uv')
+    const ws = await detectWorkspaces(root, 'py')
+    expect(ws.length).toBe(2)
+    expect(ws.every(w => w.manifest === 'pyproject')).toBe(true)
+    expect(ws.every(w => w.language === 'py')).toBe(true)
+    expect(ws.every(w => w.isLeaf === true)).toBe(true)   // Py has no tsconfig references
+    expect(ws.map(w => w.workspaceRel).sort()).toEqual(['packages/alpha', 'packages/beta'])
+  })
+
+  it('treats single pyproject.toml as one workspace', async () => {
+    const root = path.resolve(__dirname, '../tests/fixtures/ws-py-flat')
+    const ws = await detectWorkspaces(root, 'py')
+    expect(ws.length).toBe(1)
+    expect(ws[0]!.manifest).toBe('pyproject')
+    expect(ws[0]!.displayName).toBe('single-pkg')
+  })
+
+  it('fs-walk fallback finds nested pyproject.toml', async () => {
+    const root = path.resolve(__dirname, '../tests/fixtures/ws-py-fswalk')
+    const ws = await detectWorkspaces(root, 'py')
+    expect(ws.length).toBe(2)
+    expect(ws.every(w => w.manifest === 'fs-fallback')).toBe(true)
+  })
+
+  it('extracts displayName from [project].name', async () => {
+    const root = path.resolve(__dirname, '../tests/fixtures/ws-py-uv')
+    const ws = await detectWorkspaces(root, 'py')
+    const alpha = ws.find(w => w.workspaceRel === 'packages/alpha')!
+    expect(alpha.displayName).toBe('alpha')
+  })
+})

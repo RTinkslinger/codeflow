@@ -6,7 +6,7 @@ import type { Workspace, WorkspaceLanguage } from './workspace-types.js'
 export async function detectWorkspaces(rootPath: string, language: WorkspaceLanguage): Promise<Workspace[]> {
   const canonicalRoot = canonicalizePath(rootPath)
   if (language === 'ts') return detectTsWorkspaces(canonicalRoot)
-  return [singlePathFallback(canonicalRoot, 'py')]   // Py paths added in Task 13
+  return detectPyWorkspaces(canonicalRoot)
 }
 
 async function detectTsWorkspaces(rootPath: string): Promise<Workspace[]> {
@@ -111,6 +111,76 @@ async function buildTsWorkspace(
     language: 'ts',
     configPath: tsconfigPath,
     isLeaf: true,   // computed properly in Task 12
+    displayName,
+  }
+}
+
+async function detectPyWorkspaces(rootPath: string): Promise<Workspace[]> {
+  const tomlPath = path.join(rootPath, 'pyproject.toml')
+  if (await exists(tomlPath)) {
+    const tomlContent = await fs.readFile(tomlPath, 'utf-8')
+    const toml = (await import('@iarna/toml')).default.parse(tomlContent) as Record<string, any>
+    const tables: string[][] = []
+    if (toml.tool?.uv?.workspace?.members) tables.push(toml.tool.uv.workspace.members)
+    if (toml.tool?.pdm?.workspace?.members) tables.push(toml.tool.pdm.workspace.members)
+    if (toml.tool?.rye?.workspaces) tables.push(toml.tool.rye.workspaces)
+    if (tables.length > 0) {
+      const fastGlob = (await import('fast-glob')).default
+      const patterns = tables.flat()
+      const dirs = await fastGlob(patterns, {
+        cwd: rootPath,
+        onlyDirectories: true,
+        absolute: true,
+      })
+      // Filter to dirs that actually contain pyproject.toml
+      const valid: string[] = []
+      for (const d of dirs) {
+        if (await exists(path.join(d, 'pyproject.toml'))) valid.push(d)
+      }
+      return Promise.all(valid.map(d => buildPyWorkspace(rootPath, d, 'pyproject')))
+    }
+    // Single pyproject.toml at root
+    return [await buildPyWorkspace(rootPath, rootPath, 'pyproject')]
+  }
+  // fs-walk
+  const fastGlob = (await import('fast-glob')).default
+  const ignore = ['**/node_modules/**', '**/.git/**', '**/.venv/**', '**/__pycache__/**', '**/dist/**', '**/build/**']
+  const found = await fastGlob('**/pyproject.toml', {
+    cwd: rootPath,
+    ignore,
+    absolute: true,
+    deep: 5,
+    onlyFiles: true,
+  })
+  if (found.length > 0) {
+    return Promise.all(found.map(f => buildPyWorkspace(rootPath, path.dirname(f), 'fs-fallback')))
+  }
+  return [singlePathFallback(rootPath, 'py')]
+}
+
+async function buildPyWorkspace(
+  rootPath: string,
+  workspacePath: string,
+  manifest: 'pyproject' | 'fs-fallback',
+): Promise<Workspace> {
+  const canonicalWsPath = canonicalizePath(workspacePath)
+  const tomlPath = path.join(canonicalWsPath, 'pyproject.toml')
+  let displayName: string
+  try {
+    const tomlContent = await fs.readFile(tomlPath, 'utf-8')
+    const toml = (await import('@iarna/toml')).default.parse(tomlContent) as Record<string, any>
+    displayName = toml.project?.name ?? posixRelative(rootPath, canonicalWsPath)
+  } catch {
+    displayName = posixRelative(rootPath, canonicalWsPath)
+  }
+  return {
+    rootPath,
+    workspacePath: canonicalWsPath,
+    workspaceRel: posixRelative(rootPath, canonicalWsPath),
+    manifest,
+    language: 'py',
+    configPath: tomlPath,
+    isLeaf: true,
     displayName,
   }
 }
