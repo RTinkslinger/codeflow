@@ -8,16 +8,38 @@ const sym = (id: string, confidence: 'inferred' | 'verified' = 'inferred') => ({
   language: 'ts' as const, origin: 'extractor' as const, confidence,
 })
 
-describe('canonicalMerge — one file on disk → one node', () => {
-  it('deduplicates symbols by canonicalized absPath', () => {
-    const a = { ...sym('tsc:typescript:src/a:fn'), absPath: '/p/a.ts', relPath: 'a.ts' }
-    const b = { ...sym('scip:typescript:src/a:fn'), absPath: '/p/a.ts', relPath: 'a.ts' }
+const fileSym = (id: string, absPath: string, confidence: 'inferred' | 'verified' = 'inferred') => ({
+  id, kind: 'file' as const, name: absPath.split('/').pop() ?? absPath,
+  absPath, relPath: absPath.replace(/^\/p\//, ''),
+  language: 'ts' as const, origin: 'extractor' as const, confidence,
+})
+
+describe('canonicalMerge — one file on disk → one file-node', () => {
+  it('deduplicates FILE-LEVEL symbols by canonicalized absPath', () => {
+    const a = fileSym('tsc:typescript:src/a', '/p/a.ts')
+    const b = fileSym('scip:typescript:src/a', '/p/a.ts')
     const result = canonicalMerge([a, b], '/p')
     expect(result.symbols).toHaveLength(1)
   })
 
-  it('throws InvariantError on irreconcilable id collision', () => {
-    // Same id, different absPath — canonicalizer cannot merge these
+  it('does NOT dedupe non-file symbols sharing absPath (multiple defs per file is normal)', () => {
+    const fooDef = { ...sym('scip:ts:src/a:foo'), absPath: '/p/a.ts', relPath: 'a.ts' }
+    const barDef = { ...sym('scip:ts:src/a:bar'), absPath: '/p/a.ts', relPath: 'a.ts' }
+    const result = canonicalMerge([fooDef, barDef], '/p')
+    expect(result.symbols).toHaveLength(2)
+  })
+
+  it('keeps file-symbol AND its Definition symbols sharing absPath', () => {
+    const file = fileSym('file::/p/a.ts', '/p/a.ts')
+    const fooDef = { ...sym('scip:ts:src/a:foo'), absPath: '/p/a.ts', relPath: 'a.ts' }
+    const barDef = { ...sym('scip:ts:src/a:bar'), absPath: '/p/a.ts', relPath: 'a.ts' }
+    const result = canonicalMerge([file, fooDef, barDef], '/p')
+    expect(result.symbols).toHaveLength(3)
+    expect(result.symbols.filter(s => s.kind === 'file')).toHaveLength(1)
+    expect(result.symbols.filter(s => s.kind === 'function')).toHaveLength(2)
+  })
+
+  it('throws InvariantError on irreconcilable id collision (same id, different absPath)', () => {
     const x = { ...sym('id:collision'), absPath: '/p/a.ts', relPath: 'a.ts' }
     const y = { ...sym('id:collision'), absPath: '/p/b.ts', relPath: 'b.ts' }
     expect(() => canonicalMerge([x, y], '/p')).toThrow(InvariantError)
@@ -44,22 +66,20 @@ const rel = (from: string, to: string, confidence: 'inferred' | 'verified' = 'in
 })
 
 describe('canonicalMerge — relationship rewriting', () => {
-  it('rewrites loser id in relationship endpoints to winner id', () => {
-    const a = { ...sym('tsc:ts:src/a:fn'), absPath: '/p/a.ts', relPath: 'a.ts' }
-    const b = { ...sym('scip:ts:src/a:fn'), absPath: '/p/a.ts', relPath: 'a.ts' }
-    const c = sym('tsc:ts:src/b:fn') // separate file
-    // relationship from loser (b) to c should be rewritten to winner (a) → c
-    const relationship = rel('scip:ts:src/a:fn', 'tsc:ts:src/b:fn')
+  it('rewrites loser id in relationship endpoints to winner id (file-level dedup)', () => {
+    const a = fileSym('tsc:ts:src/a', '/p/a.ts')
+    const b = fileSym('scip:ts:src/a', '/p/a.ts')
+    const c = fileSym('tsc:ts:src/b', '/p/b.ts')
+    const relationship = rel('scip:ts:src/a', 'tsc:ts:src/b')
     const result = canonicalMerge([a, b, c], '/p', [relationship])
     expect(result.relationships).toHaveLength(1)
-    expect(result.relationships[0]?.from).toBe('tsc:ts:src/a:fn')
+    expect(result.relationships[0]?.from).toBe('tsc:ts:src/a')
   })
 
-  it('drops self-loops created by dedup', () => {
-    const a = { ...sym('tsc:ts:src/a:fn'), absPath: '/p/a.ts', relPath: 'a.ts' }
-    const b = { ...sym('scip:ts:src/a:fn'), absPath: '/p/a.ts', relPath: 'a.ts' }
-    // a relationship from loser to winner becomes self-loop after remap — must be dropped
-    const selfLoopRel = rel('scip:ts:src/a:fn', 'tsc:ts:src/a:fn')
+  it('drops self-loops created by file-level dedup', () => {
+    const a = fileSym('tsc:ts:src/a', '/p/a.ts')
+    const b = fileSym('scip:ts:src/a', '/p/a.ts')
+    const selfLoopRel = rel('scip:ts:src/a', 'tsc:ts:src/a')
     const result = canonicalMerge([a, b], '/p', [selfLoopRel])
     expect(result.relationships).toHaveLength(0)
   })

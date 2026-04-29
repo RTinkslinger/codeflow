@@ -34,25 +34,39 @@ describe('Full pipeline — fast lane', () => {
 })
 
 describe('Canonicalizer stress — cross-extractor same-path dedup', () => {
-  it('depcruise + scip-ts both see same .ts file → canonicalMerge produces ONE node', () => {
-    // Simulate two extractors producing different symbol IDs for the same file on disk
+  it('depcruise + scip-ts both emit FILE-LEVEL symbols for same .ts → canonicalMerge produces ONE file-node', () => {
+    // depcruise emits kind:'module' for the file; scip-ts emits kind:'file' (M1+).
+    // Both file-level → collide on absPath → dedupe to one.
     const absPath = '/p/src/auth.ts'
     const relPath = 'src/auth.ts'
-    const symA = { id: 'depcruise:node:src/auth.ts:auth.ts', kind: 'module' as const, name: 'auth.ts', absPath, relPath, language: 'ts' as const, origin: 'extractor' as const, confidence: 'inferred' as const }
-    const symB = { id: 'scip:typescript:src/auth:AuthService', kind: 'class' as const, name: 'AuthService', absPath, relPath, language: 'ts' as const, origin: 'extractor' as const, confidence: 'verified' as const }
+    const depcruiseFile = { id: 'depcruise:node:src/auth.ts:auth.ts', kind: 'module' as const, name: 'auth.ts', absPath, relPath, language: 'ts' as const, origin: 'extractor' as const, confidence: 'inferred' as const }
+    const scipFile = { id: 'file::/p/src/auth.ts', kind: 'file' as const, name: 'auth.ts', absPath, relPath, language: 'ts' as const, origin: 'extractor' as const, confidence: 'verified' as const }
 
-    // Before canonical merge: two different IDs map to the same path
-    const uniquePaths = [...new Set([symA, symB].map(s => s.absPath))]
-    expect(uniquePaths).toHaveLength(1)
+    const { symbols } = canonicalMerge([depcruiseFile, scipFile], '/p')
 
-    // After canonical merge: one winner per path
-    const { symbols } = canonicalMerge([symA, symB], '/p')
-    expect(symbols).toHaveLength(1)
+    // Both file-level for the same file → exactly one survives
+    const fileLevel = symbols.filter(s => s.kind === 'module' || s.kind === 'file')
+    expect(fileLevel).toHaveLength(1)
 
     // Winner should have promoted to verified confidence
-    expect(symbols[0]!.confidence).toBe('verified')
+    expect(fileLevel[0]!.confidence).toBe('verified')
 
-    // assertInvariants checks absPath uniqueness
+    assertInvariants({ symbols })
+  })
+
+  it('depcruise file-symbol + scip class Definition in same file → BOTH preserved (not deduped)', () => {
+    // Multiple non-file Definitions in a file are distinct nodes; the file-symbol
+    // is also distinct. Pre-M2 the merger collapsed them all into one — bug fixed.
+    const absPath = '/p/src/auth.ts'
+    const relPath = 'src/auth.ts'
+    const fileSymbol = { id: 'depcruise:node:src/auth.ts:auth.ts', kind: 'module' as const, name: 'auth.ts', absPath, relPath, language: 'ts' as const, origin: 'extractor' as const, confidence: 'inferred' as const }
+    const classDef = { id: 'scip:typescript:src/auth:AuthService', kind: 'class' as const, name: 'AuthService', absPath, relPath, language: 'ts' as const, origin: 'extractor' as const, confidence: 'verified' as const }
+
+    const { symbols } = canonicalMerge([fileSymbol, classDef], '/p')
+    expect(symbols).toHaveLength(2)
+    expect(symbols.find(s => s.kind === 'module')).toBeDefined()
+    expect(symbols.find(s => s.kind === 'class')).toBeDefined()
+
     assertInvariants({ symbols })
   })
 
