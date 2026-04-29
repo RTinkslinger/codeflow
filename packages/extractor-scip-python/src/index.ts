@@ -33,7 +33,7 @@ export class ScipPythonExtractor implements Extractor {
 
     try {
       const result = await execFileAsync(
-        'scip-python', ['index', '--output', outFile, '--project-root', root],
+        'scip-python', ['index', '--output', outFile, '--cwd', root],
         { cwd: root, timeout: opts.timeoutMs ?? 90_000 }
       )
       if (result.stderr) stderrTail = result.stderr.slice(-2000)
@@ -68,6 +68,7 @@ function parseSCIPOutputPy(scipFile: string, root: string, extractorName: string
   const scip = JSON.parse(jsonStr.slice(jsonStart)) as Record<string, unknown>
 
   const symbols: CFSymbol[] = []
+  const seenSymbolIds = new Set<string>()
 
   const docs = scip['documents'] as Array<Record<string, unknown>> | undefined ?? []
   for (const doc of docs) {
@@ -85,6 +86,8 @@ function parseSCIPOutputPy(scipFile: string, root: string, extractorName: string
       const roles = occ['symbol_roles'] as number | undefined
       // bit 0 = Definition role in SCIP protobuf
       if (!symId || !roles || (roles & 1) === 0) continue
+      if (seenSymbolIds.has(symId)) continue
+      seenSymbolIds.add(symId)
       const name = symId.split(':').at(-1) ?? symId
       symbols.push({ id: symId, kind: 'function', name, absPath: canonAbs, relPath: canonRel, language: 'py', origin: 'extractor', confidence: 'verified' })
     }

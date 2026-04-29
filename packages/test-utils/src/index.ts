@@ -90,15 +90,18 @@ export function snapshotIR(ir: unknown, label: string): void {
   fs.writeFileSync(path.join(dir, `${label}.json`), JSON.stringify(ir, null, 2))
 }
 
-export function assertInvariants(ir: { symbols: Array<{ id: string; absPath: string }> }): void {
+export function assertInvariants(ir: { symbols: Array<{ id: string; absPath: string; kind?: string }> }): void {
   const ids = ir.symbols.map(s => s.id)
   const uniqueIds = new Set(ids)
   if (ids.length !== uniqueIds.size) {
     throw new Error(`IR invariant violated: duplicate symbol IDs found`)
   }
-  const paths = ir.symbols.map(s => s.absPath)
-  const uniquePaths = new Set(paths)
-  if (paths.length !== uniquePaths.size) {
-    throw new Error(`IR invariant violated: duplicate absPath values found — one file on disk must produce exactly one node`)
+  // The "one file on disk → one node" invariant applies to FILE-level symbols only.
+  // Function/class/method symbols can legitimately share an absPath (multiple defs in one file).
+  const fileSymbols = ir.symbols.filter(s => s.kind === 'file')
+  const filePaths = fileSymbols.map(s => s.absPath)
+  const uniqueFilePaths = new Set(filePaths)
+  if (filePaths.length !== uniqueFilePaths.size) {
+    throw new Error(`IR invariant violated: duplicate absPath values found among file-symbols — one file on disk must produce exactly one file-node`)
   }
 }

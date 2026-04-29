@@ -70,6 +70,7 @@ function parseSCIPOutput(scipFile: string, root: string, extractorName: string, 
 
   const symbols: CFSymbol[] = []
   const relationships: Relationship[] = []
+  const seenSymbolIds = new Set<string>()
 
   const docs = scip['documents'] as Array<Record<string, unknown>> | undefined ?? []
   for (const doc of docs) {
@@ -87,6 +88,10 @@ function parseSCIPOutput(scipFile: string, root: string, extractorName: string, 
       const roles = occ['symbol_roles'] as number | undefined
       // bit 0 = Definition role in SCIP protobuf
       if (!symId || !roles || (roles & 1) === 0) continue
+      // SCIP can emit the same Definition occurrence multiple times (re-declarations, overloads).
+      // Dedup by symId — IDs are SCIP symbol strings which are inherently unique per definition.
+      if (seenSymbolIds.has(symId)) continue
+      seenSymbolIds.add(symId)
       const name = symId.split(':').at(-1) ?? symId
       symbols.push({ id: symId, kind: 'function', name, absPath: canonAbs, relPath: canonRel, language: 'ts', origin: 'extractor', confidence: 'verified' })
     }
