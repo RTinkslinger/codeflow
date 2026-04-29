@@ -10,7 +10,7 @@ export function _resetMemoCache(): void {
 }
 
 async function manifestMtimeKey(rootPath: string): Promise<string> {
-  const candidates = ['pnpm-workspace.yaml', 'package.json', 'pyproject.toml']
+  const candidates = ['pnpm-workspace.yaml', 'package.json', 'pyproject.toml', 'setup.py']
   const stats: string[] = []
   for (const c of candidates) {
     try {

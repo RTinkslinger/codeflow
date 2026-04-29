@@ -27,6 +27,11 @@ describe('extractSetupPyName', () => {
     const r = extractSetupPyName(`setup(version="1.0")`)
     expect(r.warning).toBe('SETUP_PY_NAME_UNRESOLVED')
   })
+  it('does not match suffix identifiers like author_name=', () => {
+    const r = extractSetupPyName(`setup(author_name='John Doe', version='1.0')`)
+    expect(r.name).toBeNull()
+    expect(r.warning).toBe('SETUP_PY_NAME_UNRESOLVED')
+  })
 })
 
 describe('detectWorkspaces — setup.py', () => {
