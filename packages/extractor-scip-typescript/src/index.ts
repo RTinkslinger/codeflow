@@ -8,6 +8,55 @@ import { canonicalizePath, posixRelative } from '@codeflow/canonical'
 
 const execFileAsync = promisify(execFile)
 
+/**
+ * Extract a human-readable name from a SCIP symbol descriptor.
+ *
+ * SCIP format: `<scheme> <manager> <pkg-name> <pkg-version> <descriptor>`
+ * Descriptor: chain of `<name>(<disambiguator>)<suffix>` separated by `/`.
+ * Suffixes: `.` (term), `#` (type), `()` (method), `:` (type-param), `[]` (alias).
+ *
+ * Strategy: take the last non-empty descriptor segment, strip terminal SCIP
+ * suffix punctuation. Falls back to filename for module-level symbols, then
+ * to the raw symId.
+ */
+function extractSymbolName(symId: string): string {
+  // Split by space; first 4 tokens are scheme + 3-part package-id
+  // Descriptor is everything after that. But package fields may contain spaces
+  // when escaped — codeflow's fixtures don't hit that so we use a simple split.
+  const parts = symId.split(' ')
+  if (parts.length < 5) return symId   // malformed — use raw id
+  const descriptor = parts.slice(4).join(' ')
+
+  // Descriptor uses backticks around path-like segments (e.g. `index.ts`).
+  // Strip all backticks for cleaner output.
+  const noBackticks = descriptor.replace(/`/g, '')
+
+  // Split on / — take the last non-empty segment
+  const segments = noBackticks.split('/').filter(s => s.length > 0)
+  if (segments.length === 0) return symId
+
+  let last = segments[segments.length - 1]!
+
+  // Strip terminal SCIP suffix punctuation first (`.` term, `#` type, `()` method, `:` type-param)
+  // Order matters: strip trailing `().` or `()` before stripping lone `#` or `.`
+  last = last.replace(/\(\)\.$/, '')   // method term: `foo().` → `foo`
+  last = last.replace(/\(\)$/, '')     // method: `foo()` → `foo`
+  last = last.replace(/[.#:[\]]+$/, '') // remaining terminal markers
+
+  // Within a segment, `#` separates class from member (e.g. `Greeter#greet`).
+  // Take the part after the last `#` when present — that's the member name.
+  // If the result is empty (bare `Greeter#`), keep the part before.
+  if (last.includes('#')) {
+    const afterHash = last.split('#').at(-1) ?? ''
+    last = afterHash.length > 0 ? afterHash : (last.split('#')[0] ?? last)
+  }
+
+  // For parameter disambiguators like `greet.(self)` — strip trailing `(anything)`
+  last = last.replace(/\([^)]*\)$/, '')
+
+  return last || symId
+}
+
 function emptyIR(name: string, version: string, invocationPath: string, root: string, partial = false): IR {
   return {
     schemaVersion: '1',
@@ -118,7 +167,7 @@ function parseSCIPOutput(scipFile: string, root: string, extractorName: string, 
         // Dedup by symId — IDs are SCIP symbol strings which are inherently unique per definition.
         if (seenSymbolIds.has(symId)) continue
         seenSymbolIds.add(symId)
-        const name = symId.split(':').at(-1) ?? symId
+        const name = extractSymbolName(symId)
         symbols.push({ id: symId, kind: 'function', name, absPath: canonAbs, relPath: canonRel, language: 'ts', origin: 'extractor', confidence: 'verified' })
         continue
       }
