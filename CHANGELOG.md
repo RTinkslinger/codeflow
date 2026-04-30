@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.18 — 2026-04-30
+
+**Fix: "Syntax error in text" on TS codebases with `<constructor>`, `<get>X`, or generics in symbol names**
+
+`renderer-mermaid` now escapes `<`, `>`, and `&` in node and subgraph labels. Mermaid renders labels as HTML by default (`htmlLabels: true`) and was treating `<constructor>`, `<T>`, `<get>state` etc. as HTML tags — causing a silent parse failure. Bug pre-existed v0.1.16's canonicalMerge fix but was hidden because Definitions were collapsing into file-symbols (whose names don't contain `<`/`>`).
+
 ## v0.1.17 — 2026-04-30
 
 **M3: Mermaid subgraphs + setup.py legacy support**

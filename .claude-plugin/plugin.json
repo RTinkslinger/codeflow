@@ -1,7 +1,7 @@
 {
   "name": "codeflow",
   "description": "Live-updating module dependency flowcharts for polyglot codebases. Type /flow to open a live browser diagram.",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "author": { "name": "Aakash Kumar" },
   "license": "MIT",
   "keywords": ["codeflow", "flowchart", "dependency-graph", "typescript", "python", "visualization"],

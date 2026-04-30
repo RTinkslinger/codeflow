@@ -3,7 +3,15 @@ import type { IR, CFSymbol } from '@codeflow/core'
 const SAFE_ID_RE = /[^a-zA-Z0-9_]/g
 
 function sanitizeLabel(label: string): string {
-  return label.replace(/"/g, '&quot;').replace(/]/g, '&#93;')
+  // Escape & first so existing-or-new entities are not double-encoded.
+  // < and > must be escaped because Mermaid renders labels as HTML by default
+  // (htmlLabels: true) and treats <constructor>, <T>, etc. as tags — silent parse failure.
+  return label
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/]/g, '&#93;')
 }
 
 function buildSafeIdMap(ir: IR): (id: string) => string {

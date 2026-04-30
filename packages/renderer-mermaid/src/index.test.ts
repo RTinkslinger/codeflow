@@ -58,6 +58,22 @@ describe('renderMermaid', () => {
     expect(out).toContain('&quot;')
   })
 
+  it('escapes HTML-significant chars in labels (Mermaid htmlLabels)', () => {
+    const ir = mockExtractorOutput({ symbolCount: 0 })
+    ir.symbols = [
+      { id: 's1', kind: 'method', name: '<constructor>', absPath: '/p/x.ts', relPath: 'x.ts', language: 'ts', origin: 'extractor', confidence: 'verified' },
+      { id: 's2', kind: 'class', name: 'Foo<T>', absPath: '/p/y.ts', relPath: 'y.ts', language: 'ts', origin: 'extractor', confidence: 'verified' },
+      { id: 's3', kind: 'function', name: 'a&b', absPath: '/p/z.ts', relPath: 'z.ts', language: 'ts', origin: 'extractor', confidence: 'verified' },
+    ]
+    const out = renderMermaid(ir)
+    expect(out).toContain('&lt;constructor&gt;')
+    expect(out).toContain('Foo&lt;T&gt;')
+    expect(out).toContain('a&amp;b')
+    // Raw < and > must NOT appear in any label slot — they would silently break Mermaid's parser
+    expect(out).not.toMatch(/\["[^"]*<[^"]*"\]/)
+    expect(out).not.toMatch(/\["[^"]*>[^"]*"\]/)
+  })
+
   it('disambiguates safeId collisions from truncation', () => {
     const ir = mockExtractorOutput({ symbolCount: 0 })
     // Two IDs that share the same 60-char prefix after sanitization
